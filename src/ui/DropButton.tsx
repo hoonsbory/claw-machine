@@ -3,13 +3,16 @@ import type { ReactElement } from 'react';
 import { DESIGN_TOKENS } from '../theme/tokens';
 
 export interface DropButtonProps {
-  /** 시도 중이면 비활성 모양이 된다 */
+  /**
+   * 시도 중이거나 남은 기회가 없으면 비활성 모양이 된다. 모양만 바꾸는 것이고,
+   * 기회 없이 시도가 시작되지 않게 막는 것은 집게 상태 흐름(clawMachine.ts 의 hasTryLeft)이다.
+   */
   isDisabled: boolean;
   onPress: () => void;
 }
 
 /**
- * 오른쪽 아래 큰 내리기 버튼. 갈색 테두리의 산호색 사탕 버튼이고, 시도 중에는 옅어진다.
+ * 오른쪽 아래 큰 내리기 버튼. 갈색 테두리의 산호색 사탕 버튼이고, 시도 중이거나 기회가 없으면 옅어진다.
  * 손을 떼기를 기다리지 않도록 누르는 순간(pointerdown) 반응한다.
  */
 export function DropButton({ isDisabled, onPress }: DropButtonProps): ReactElement {

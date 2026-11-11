@@ -13,7 +13,7 @@ export interface DebugPanelProps {
 }
 
 /**
- * 주소에 ?debug 를 붙였을 때만 뜨는 조정 패널. 위쪽 왼편, 뽑은 수 배지 아래에 접힌 채 있다가 누르면 펼쳐진다.
+ * 주소에 ?debug 를 붙였을 때만 뜨는 조정 패널. 위쪽 왼편 구석에 접힌 채 있다가 누르면 펼쳐진다.
  * 집기 수치 셋을 슬라이더로 바꾸고, 지금 연속 실패 수와 이 기기에서 뽑은 기록을 저장할 수 있는지 보여 준다.
  * 바꾼 값은 다음 시도부터 적용되고 저장하지 않는다.
  */
@@ -101,8 +101,8 @@ const SLIDERS: readonly SliderSpec[] = [
   { key: 'pityAfterFails', label: '보정까지 실패 횟수', min: 1, max: 6, step: 1, fractionDigits: 0 },
 ];
 
-/** 위쪽 왼편 구석의 뽑은 수 배지(높이 30, 위 6) 바로 아래 */
-const EDGE_TOP = 44;
+/** 위쪽 왼편 구석. 소리 버튼(높이 30, 위 6)과 높이를 맞춘다. */
+const EDGE_TOP = 6;
 const EDGE_LEFT = 10;
 const TOGGLE_HEIGHT = 30;
 const TOGGLE_PADDING_X = 12;

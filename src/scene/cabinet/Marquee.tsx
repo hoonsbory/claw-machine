@@ -41,7 +41,7 @@ export function Marquee(): ReactElement {
 const AWNING_LIFT = 0.012;
 const SIGN_LIFT = 0.024;
 
-/** 차양은 뒤쪽 두 기둥 사이, 뒷벽 윗변에 걸려 아래 물결이 뒷벽 위쪽으로 늘어진다(위 구석의 뽑은 수 배지와 겹치지 않을 만큼만 솟는다) */
+/** 차양은 뒤쪽 두 기둥 사이, 뒷벽 윗변에 걸려 아래 물결이 뒷벽 위쪽으로 늘어진다(위 구석의 소리 버튼·조정 버튼과 겹치지 않을 만큼만 솟는다) */
 const AWNING_WIDTH = (WALL_CENTER_OFFSET - PILLAR_RADIUS) * 2;
 const AWNING_HEIGHT = (AWNING_WIDTH * AWNING_CANVAS_HEIGHT) / AWNING_CANVAS_WIDTH;
 const AWNING_RISE = 0.06;

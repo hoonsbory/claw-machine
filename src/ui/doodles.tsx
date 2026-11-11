@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { DESIGN_TOKENS } from '../theme/tokens';
 
 /*
- * 손으로 그린 듯한 작은 그림들: 구름, 네 갈래 반짝이, 작은 별, 꽃. 모두 직접 그린 모양이다.
+ * 손으로 그린 듯한 작은 그림들: 구름, 네 갈래 반짝이, 작은 별, 하트, 꽃. 모두 직접 그린 모양이다.
  * 선은 크기와 상관없이 같은 굵기로 보이도록 non-scaling-stroke 로 그리고, 경로는 일부러 조금씩 비뚤게 잡았다.
  * 장식이라 화면 읽기 프로그램에는 보이지 않는다.
  */
@@ -35,6 +35,15 @@ export function StarDoodle({ className }: DoodleProps): ReactElement {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden>
       <path d={STAR_PATH} fill={color.butter} {...OUTLINE} />
+    </svg>
+  );
+}
+
+/** 통통한 산호색 하트. 간판의 하트와 같은 모양을 오른쪽 봉우리만 조금 다르게 그렸다. */
+export function HeartDoodle({ className }: DoodleProps): ReactElement {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden>
+      <path d={HEART_PATH} fill={color.coral} {...OUTLINE} />
     </svg>
   );
 }
@@ -76,6 +85,7 @@ const CLOUD_PATH =
 const CLOUD_CREASE_PATH = 'M37 25C40 28 41 31 40 34M70 21C72 24 72 27 70 30';
 const SPARKLE_PATH = 'M12 1.5C13 8.2 15.6 10.9 22.5 12C15.6 13.1 13 15.8 12 22.5C11 15.8 8.4 13.1 1.5 12C8.4 10.9 11 8.2 12 1.5Z';
 const STAR_PATH = 'M12 2.2L14.8 8.5L21.9 9.2L16.6 13.9L18.2 20.9L12 17.3L5.9 21L7.4 13.9L2.1 9.1L9.2 8.5Z';
+const HEART_PATH = 'M12 21.3C0.4 14 1 3.2 7 3.5C10.4 3.7 12 6.4 12 8.4C12.1 6.3 13.7 3.5 17.2 3.4C23.1 3.2 23.7 14.1 12 21.3Z';
 
 const FLOWER_CENTER_X = 12;
 const FLOWER_CENTER_Y = 10;

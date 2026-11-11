@@ -7,7 +7,7 @@ export interface SoundToggleProps {
   onToggle: () => void;
 }
 
-/** 위쪽 오른편의 소리 켜고 끄는 버튼. 음소거면 스피커에 X 가, 아니면 소리 물결이 그려진다. 뽑은 수 배지와 같은 크림색 동그라미다. */
+/** 위쪽 오른편의 소리 켜고 끄는 버튼. 음소거면 스피커에 X 가, 아니면 소리 물결이 그려진다. 남은 기회 판과 같은 크림색에 갈색 테두리다. */
 export function SoundToggle({ isMuted, onToggle }: SoundToggleProps): ReactElement {
   return (
     <button type="button" className={button} aria-label="음소거" aria-pressed={isMuted} onClick={onToggle}>
@@ -23,7 +23,7 @@ const SPEAKER_PATH = 'M3 7.5h3l4-3.5v12l-4-3.5H3z';
 const SOUND_WAVES_PATH = 'M13 7.5a3.5 3.5 0 0 1 0 5M15.5 5a7 7 0 0 1 0 10';
 const MUTED_MARK_PATH = 'M13 7.5l4.5 5M17.5 7.5l-4.5 5';
 
-/** 390×844 에서 기계 유리 윗모서리(y≈37)보다 위에 들어가는 크기와 자리. 뽑은 수 배지와 높이를 맞췄다. */
+/** 390×844 에서 기계 유리 윗모서리(y≈37)보다 위에 들어가는 크기와 자리. 조정 버튼(?debug)과 높이를 맞췄다. */
 const SIZE = 30;
 const EDGE_TOP = 6;
 const EDGE_RIGHT = 10;

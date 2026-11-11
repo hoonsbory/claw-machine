@@ -1,7 +1,6 @@
 import { css, injectGlobal } from '@emotion/css';
 import { useEffect, useState, type ReactElement } from 'react';
 import { createSfx, sfxForEvent, vibrate } from './audio/sfx';
-import { DOLL_KINDS } from './config/dollCatalog';
 import { isDebugMode, type TuningOverrides } from './config/runtimeTuning';
 import type { ClawEvent } from './game/types';
 import { useMoveInput } from './input/useMoveInput';
@@ -15,6 +14,7 @@ import { DebugPanel } from './ui/DebugPanel';
 import { DropButton } from './ui/DropButton';
 import { Hud } from './ui/Hud';
 import { Joystick } from './ui/Joystick';
+import { OutOfTriesNotice } from './ui/OutOfTriesNotice';
 import { RotateNotice } from './ui/RotateNotice';
 import { SoundToggle } from './ui/SoundToggle';
 import { SkyBackdrop } from './ui/backdrop/SkyBackdrop';
@@ -59,6 +59,10 @@ function App(): ReactElement {
     vibrate('win');
   }, [celebration]);
 
+  const isIdle = session.phase === 'idle';
+  // 마지막 기회로 시작한 시도가 도는 동안에도 0 이지만, 그 시도가 끝나 집게가 쉴 때에야 안내를 띄운다
+  const isOutOfTries = session.tries === 0;
+
   const toggleMute = (): void => {
     const nextMuted = !isMuted;
     SFX.setMuted(nextMuted);
@@ -83,10 +87,11 @@ function App(): ReactElement {
             onFailStreakChange={setFailStreak}
           />
         </GameCanvas>
-        <Hud wonCount={session.wonKindIds.size} totalCount={DOLL_KINDS.length} />
+        <Hud tries={session.tries} />
         <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
         <Joystick onMove={input.setStick} />
-        <DropButton isDisabled={session.phase !== 'idle'} onPress={input.requestDrop} />
+        <DropButton isDisabled={!isIdle || isOutOfTries} onPress={input.requestDrop} />
+        <OutOfTriesNotice isVisible={isIdle && isOutOfTries && celebration === null} />
         {IS_DEBUG_MODE && (
           <DebugPanel overrides={overrides} onChange={setOverrides} failStreak={failStreak} canSaveProgress={CAN_SAVE_PROGRESS} />
         )}
