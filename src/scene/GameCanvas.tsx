@@ -74,11 +74,15 @@ export function GameCanvas({ instances, vanishingIds, onVanished, children }: Ga
   );
 }
 
-/** 카메라는 플레이어가 돌릴 수 없다. 화면비가 바뀔 때마다 기계 폭이 화면 폭에 맞도록 세로 시야각을 다시 정한다. */
+/**
+ * 카메라는 플레이어가 돌릴 수 없다. 화면비가 바뀔 때마다 기계 폭이 화면 폭에 맞도록 세로 시야각을 다시 정하되,
+ * 9:16 처럼 넓은 화면에서도 기계 윗부분이 잘리지 않도록 세로 시야는 기준 화면보다 좁아지지 않게 한다.
+ */
 function FixedCamera(): ReactElement {
   const aspect = useThree((state) => state.size.width / state.size.height);
   const setStore = useThree((state) => state.set);
   const cameraRef = useRef<PerspectiveCamera>(null);
+  const halfHeightTan = Math.max(HALF_WIDTH_TAN / aspect, MIN_HALF_HEIGHT_TAN);
 
   useLayoutEffect(() => {
     const camera = cameraRef.current;
@@ -90,7 +94,7 @@ function FixedCamera(): ReactElement {
     <perspectiveCamera
       ref={cameraRef}
       position={CAMERA_POSITION}
-      fov={MathUtils.radToDeg(2 * Math.atan(HALF_WIDTH_TAN / aspect))}
+      fov={MathUtils.radToDeg(2 * Math.atan(halfHeightTan))}
       aspect={aspect}
       near={CAMERA_NEAR}
       far={CAMERA_FAR}
@@ -114,6 +118,10 @@ const CAMERA_POSITION: Vector3Tuple = [0, 14, 22];
 const CAMERA_TARGET: Vector3Tuple = [0, -1.2, 0];
 /** 화면 가로 절반에 해당하는 시야 기울기. 세로 시야각 = 2·atan(이 값 / 화면비) */
 const HALF_WIDTH_TAN = 0.175;
+/** 기계 전체가 보이는 것을 확인한 기준 화면(390×844)의 화면비 */
+const REFERENCE_ASPECT = 390 / 844;
+/** 세로 시야 절반 기울기의 하한(≈0.379). 기준 화면만큼 세로로 보여 뒷벽 위 모서리(y=7)까지 잘리지 않는다. */
+const MIN_HALF_HEIGHT_TAN = HALF_WIDTH_TAN / REFERENCE_ASPECT;
 const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 100;
 const MAX_PIXEL_RATIO = 2;
