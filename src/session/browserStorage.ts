@@ -29,3 +29,22 @@ export function createBrowserStorage(): KeyValueStorage {
     },
   };
 }
+
+/** 쓰기 확인에 잠깐 썼다가 바로 지우는 키와 값 */
+const PROBE_KEY = 'claw-machine:probe';
+const PROBE_VALUE = '1';
+
+/**
+ * 이 브라우저에서 뽑은 기록을 실제로 저장할 수 있는지 잠깐 써 보고 지워서 확인한다. 조정 패널(?debug)에 보여 준다.
+ * 사생활 보호 탭처럼 쓰기는 되지만 탭을 닫으면 지워지는 경우는 알아내지 못한다.
+ */
+export function canWriteStorage(): boolean {
+  try {
+    window.localStorage.setItem(PROBE_KEY, PROBE_VALUE);
+    const isReadBack = window.localStorage.getItem(PROBE_KEY) === PROBE_VALUE;
+    window.localStorage.removeItem(PROBE_KEY);
+    return isReadBack;
+  } catch {
+    return false;
+  }
+}

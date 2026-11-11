@@ -7,13 +7,16 @@ export interface DebugPanelProps {
   overrides: TuningOverrides;
   onChange: (next: TuningOverrides) => void;
   failStreak: number;
+  /** 이 기기에서 뽑은 기록을 저장할 수 있는지 */
+  canSaveProgress: boolean;
 }
 
 /**
  * 주소에 ?debug 를 붙였을 때만 뜨는 조정 패널. 위쪽 왼편에 접힌 채 있다가 누르면 펼쳐진다.
- * 집기 수치 셋을 슬라이더로 바꾸고 지금 연속 실패 수를 보여 준다. 바꾼 값은 다음 시도부터 적용되고 저장하지 않는다.
+ * 집기 수치 셋을 슬라이더로 바꾸고, 지금 연속 실패 수와 이 기기에서 뽑은 기록을 저장할 수 있는지 보여 준다.
+ * 바꾼 값은 다음 시도부터 적용되고 저장하지 않는다.
  */
-export function DebugPanel({ overrides, onChange, failStreak }: DebugPanelProps): ReactElement {
+export function DebugPanel({ overrides, onChange, failStreak, canSaveProgress }: DebugPanelProps): ReactElement {
   const [isOpen, setIsOpen] = useState(false);
   const bodyId = useId();
   const current = applyTuning(GAME_CONFIG, overrides).grab;
@@ -52,12 +55,23 @@ export function DebugPanel({ overrides, onChange, failStreak }: DebugPanelProps)
           <p className={streak}>
             연속 실패 <strong>{failStreak}</strong>
           </p>
+          <p className={streak}>
+            기록 저장 <strong>{getSaveStatus(canSaveProgress)}</strong>
+          </p>
           <p className={note}>다음 시도부터 적용 · 새로고침하면 사라짐</p>
         </div>
       )}
     </div>
   );
 }
+
+function getSaveStatus(canSaveProgress: boolean): string {
+  if (canSaveProgress) return SAVE_AVAILABLE_TEXT;
+  return SAVE_BLOCKED_TEXT;
+}
+
+const SAVE_AVAILABLE_TEXT = '가능';
+const SAVE_BLOCKED_TEXT = '불가 · 새로고침하면 뽑은 인형이 다시 나온다';
 
 /** 슬라이더 값을 바꾸는 키. 방향키는 집게 조작이기도 하다. */
 const RANGE_VALUE_KEYS = new Set(['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown']);

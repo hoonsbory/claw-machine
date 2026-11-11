@@ -7,7 +7,7 @@ import type { ClawEvent } from './game/types';
 import { useMoveInput } from './input/useMoveInput';
 import { ClawRig } from './scene/ClawRig';
 import { GameCanvas } from './scene/GameCanvas';
-import { createBrowserStorage } from './session/browserStorage';
+import { canWriteStorage, createBrowserStorage } from './session/browserStorage';
 import { useGameSession } from './session/useGameSession';
 import { Celebration } from './ui/Celebration';
 import { DebugPanel } from './ui/DebugPanel';
@@ -25,6 +25,8 @@ const SFX = createSfx();
 const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'keydown'] as const;
 /** 주소에 ?debug 를 붙여 열었을 때만 조정 패널과 충돌 도형 선을 보여 준다 */
 const IS_DEBUG_MODE = isDebugMode(window.location.search);
+/** 조정 패널에 보여 줄, 이 기기에서 뽑은 기록을 저장할 수 있는지. 패널이 뜨는 ?debug 일 때만 써 보고 확인한다. */
+const CAN_SAVE_PROGRESS = IS_DEBUG_MODE && canWriteStorage();
 
 function App(): ReactElement {
   const session = useGameSession(STORAGE);
@@ -78,7 +80,9 @@ function App(): ReactElement {
         <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
         <Joystick onMove={input.setStick} />
         <DropButton isDisabled={session.phase !== 'idle'} onPress={input.requestDrop} />
-        {IS_DEBUG_MODE && <DebugPanel overrides={overrides} onChange={setOverrides} failStreak={failStreak} />}
+        {IS_DEBUG_MODE && (
+          <DebugPanel overrides={overrides} onChange={setOverrides} failStreak={failStreak} canSaveProgress={CAN_SAVE_PROGRESS} />
+        )}
         {celebration !== null && (
           // 종류마다 한 번만 뽑으므로 종류 id 가 축하마다 다르다. 다음 축하는 새로 그려져 처음부터 다시 터진다.
           <Celebration
