@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>인형 스티커 만들기</title>
+    <link rel="icon" href="data:," />
+    <!--
+      개발 서버(npm run dev)에서만 여는 도구 페이지. 빌드 결과물(dist)에는 들어가지 않는다.
+      카탈로그의 인형 모델마다 스티커를 그리고 저장 링크를 붙인다. 쓰는 법은 docs/dolls.md 2장.
+    -->
+    <style>
+      body {
+        margin: 24px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+      }
+      #stickers {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 16px;
+      }
+      figure {
+        margin: 0;
+        text-align: center;
+      }
+      /* 투명한 곳이 보이도록 회색 바둑판 위에 놓는다 */
+      figure img {
+        display: block;
+        background: repeating-conic-gradient(#ddd 0% 25%, #f4f4f4 0% 50%) 0 0 / 16px 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>인형 스티커 만들기</h1>
+    <p id="status">그리는 중…</p>
+    <button id="save-all" type="button" disabled>모두 저장</button>
+    <div id="stickers"></div>
+    <script type="module" src="./stickerMaker.ts"></script>
+  </body>
+</html>

@@ -11,6 +11,7 @@ import {
   type Vector3Tuple,
 } from 'three';
 import { DOLL_KINDS } from '../config/dollCatalog';
+import { resolvePublicUrl } from '../config/publicUrl';
 import { getModelBaseY } from '../game/dollGeometry';
 import type { DollKind, PlaceholderLook } from '../game/types';
 import { DESIGN_TOKENS } from '../theme/tokens';
@@ -53,27 +54,16 @@ function DollShape({ kind }: DollModelProps): ReactElement {
   return (
     <ModelBoundary fallback={placeholder}>
       <Suspense fallback={placeholder}>
-        <GltfShape url={resolveModelUrl(kind.modelUrl)} baseY={baseY} />
+        <GltfShape url={resolvePublicUrl(kind.modelUrl)} baseY={baseY} />
       </Suspense>
     </ModelBoundary>
   );
 }
 
-/** 주소 맨 앞의 / */
-const LEADING_SLASH = /^\//;
-
-/**
- * 카탈로그의 modelUrl(public/ 아래 상대 경로, 예: `dolls/rabbit.glb`)을 실제로 읽을 주소로 바꾼다. 모델 주소는 여기서만 만든다.
- * 앱이 놓인 경로(import.meta.env.BASE_URL) 뒤에 붙여, 빌드 결과물을 하위 경로에 올려도 그 아래의 dolls/ 를 읽는다.
- * 앞에 / 를 붙여 적었어도 같은 주소가 된다.
- */
-function resolveModelUrl(modelUrl: string): string {
-  return `${import.meta.env.BASE_URL}${modelUrl.replace(LEADING_SLASH, '')}`;
-}
-
 // 모델 파일은 앱을 읽자마자 미리 받기 시작한다. 인형이 처음 그려질 때 임시 도형이 오래 보이지 않는다.
+// 카탈로그의 modelUrl(public/ 아래 상대 경로)은 앱이 놓인 경로 뒤에 붙여 읽으므로(resolvePublicUrl) 하위 경로에 올려도 dolls/ 를 찾는다.
 for (const kind of DOLL_KINDS) {
-  if (kind.modelUrl !== null) useGLTF.preload(resolveModelUrl(kind.modelUrl));
+  if (kind.modelUrl !== null) useGLTF.preload(resolvePublicUrl(kind.modelUrl));
 }
 
 /** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 도형 곰의 높이(약 1.55)와 거의 같은 크기다. */

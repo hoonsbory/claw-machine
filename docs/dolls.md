@@ -55,6 +55,10 @@ npm run shrink-glb -- <원본.glb> public/dolls/<id>.glb [목표 삼각형 수=1
 - 원본의 방향(위가 +Y)은 그대로 둔다. 줄인 뒤에는 아래 3장대로 게임에서 모양과 방향을 확인한다.
 - 무거운 원본은 저장소 맨 위에 두어도 된다. `.gitignore` 가 맨 위의 `.glb`·`.webp` 를 빼 두어서 실수로 올라가지 않는다. 올리는 것은 `public/dolls/` 의 줄인 파일뿐이다.
 
+### 스티커 그림 만들기 (`tools/stickers.html`)
+
+기계 아래 몸통에 붙은 인형 스티커는 `public/dolls/` 의 모델을 그대로 그려 만든 그림(`public/stickers/<id>.png`, 256px 투명 PNG)이다. 인형을 바꾸거나 고쳤으면 개발 서버를 켜고(`npm run dev`) `http://localhost:5173/tools/stickers.html` 을 열면, 카탈로그의 인형마다 크림색 테두리를 두른 스티커가 그려진다. 스티커 아래의 `저장` 링크(또는 `모두 저장`)로 받은 `<id>.png` 를 `public/stickers/` 에 넣어 바꾼다. 스티커 그림이 없는 종류는 그 자리만 비고 게임은 그대로 돈다.
+
 ## 3. 넣는 순서
 
 1. 모델 파일 이름을 종류 id 로 정해 `public/dolls/<id>.glb` 에 넣는다. 예를 들어 `public/dolls/kurimanju.glb` 다. 무거운 원본이면 위의 "무거운 모델 줄이기" 로 이 자리에 바로 만든다. id 는 영어 소문자로 짓고 종류마다 달라야 한다. 빌드하면 이 파일들이 `dist/dolls/` 로 그대로 복사된다. `dist` 폴더는 정적 호스팅의 맨 위에 올려도, 하위 경로(예: `https://주소/secret-path/`)에 올려도 그대로 동작한다. 하위 경로에 올렸다면 넘겨줄 주소는 반드시 `/` 로 끝나게 한다. `https://주소/secret-path` 처럼 `/` 없이 열면 호스팅에 따라 `불러오는 중…` 에서 멈춘다.
