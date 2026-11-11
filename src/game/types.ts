@@ -59,3 +59,28 @@ export interface CabinetLayout {
   chuteMaxZ: number;
   home: Vec2;
 }
+
+/** 물리에서 읽은 인형 하나의 현재 위치 */
+export interface DollSnapshot {
+  id: string;
+  kindId: string;
+  x: number;
+  y: number;
+  z: number;
+}
+
+/** 집게가 잡고 있는 인형과 놓칠 시점 */
+export interface HeldDoll {
+  dollId: string;
+  kindId: string;
+  /** 잡은 뒤 몇 초에 놓치는지. 끝까지 들면 Infinity */
+  slipAt: number;
+  /** 잡은 뒤 지난 시간(초) */
+  heldTime: number;
+}
+
+/** 인형 종류 id로 그 종류의 치수와 난이도를 찾는다 */
+export interface DollLookup {
+  metricsOf(kindId: string): DollMetrics;
+  tuningOf(kindId: string): GrabTuning;
+}
