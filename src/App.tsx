@@ -4,6 +4,7 @@ import { GameScreen } from './GameScreen';
 import { createBrowserStorage } from './session/browserStorage';
 import { DESIGN_TOKENS } from './theme/tokens';
 import { ChargePage } from './ui/ChargePage';
+import { Credit } from './ui/Credit';
 import { SkyBackdrop } from './ui/backdrop/SkyBackdrop';
 import { useIsChargeRoute } from './ui/useChargeRoute';
 
@@ -20,6 +21,7 @@ function App(): ReactElement {
     <div className={screen}>
       <main className={frame}>
         <SkyBackdrop showsCharacters={!isChargeRoute} />
+        <Credit />
         {isChargeRoute ? <ChargePage storage={STORAGE} /> : <GameScreen storage={STORAGE} />}
       </main>
     </div>
