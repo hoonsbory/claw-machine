@@ -1,0 +1,12 @@
+/// <reference types="vitest/config" />
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
+
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react()],
+  test: {
+    // spike/·dist/·.claude-worktrees/ 는 테스트 대상이 아니다
+    include: ['src/**/*.test.{ts,tsx}'],
+  },
+})
