@@ -1,5 +1,6 @@
 import type { GameConfig } from '../config/gameConfig';
 import { getDollMetrics, getGrabTuning } from './dollGeometry';
+import { clamp } from './math';
 import type { DollKind, DollLookup, DollMetrics, DollSnapshot, GrabTuning, HeldDoll, Vec2 } from './types';
 
 /** 끝까지 들고 가는 인형의 놓치는 시점 */
@@ -49,10 +50,6 @@ export function createDollLookup(kinds: readonly DollKind[], config: GameConfig)
 
 function getHorizontalDistance(from: Vec2, to: Vec2): number {
   return Math.hypot(to.x - from.x, to.z - from.z);
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value));
 }
 
 /** 집게 아래를 막는 인형 중 가장 높은 것 위에서 멈춘다. 바닥 근처보다 낮게 내려가지는 않는다. */

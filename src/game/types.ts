@@ -84,3 +84,35 @@ export interface DollLookup {
   metricsOf(kindId: string): DollMetrics;
   tuningOf(kindId: string): GrabTuning;
 }
+
+/** 시도 한 번의 단계: 대기 → 내리기 → 오므리기 → 올리기 → 옮기기 → 놓기 */
+export type ClawPhase = 'idle' | 'drop' | 'close' | 'lift' | 'carry' | 'release';
+
+/** 매 프레임 새로 만드는 집게 상태. x·z는 흔들림을 뺀 실제 위치다. */
+export interface ClawState {
+  phase: ClawPhase;
+  /** 지금 단계에 들어온 뒤 지난 시간(초) */
+  phaseTime: number;
+  x: number;
+  z: number;
+  /** 집게 중심 높이 */
+  hubY: number;
+  /** 0 벌림 ~ 1 오므림 */
+  closeAmount: number;
+  /** 오므리는 동안 정해 둔 결과 */
+  pendingGrab: HeldDoll | null;
+  held: HeldDoll | null;
+  /** 연속으로 실패한 횟수 */
+  failStreak: number;
+  /** 이번 시도에서 인형을 뽑았는지 */
+  wonThisTry: boolean;
+}
+
+/** 집게 상태 흐름이 장면·소리 쪽에 알리는 일 */
+export type ClawEvent =
+  | { type: 'dropStarted' }
+  | { type: 'grabbed'; dollId: string }
+  | { type: 'missed' }
+  | { type: 'slipped'; dollId: string }
+  | { type: 'released'; dollId: string | null }
+  | { type: 'tryEnded'; won: boolean };
