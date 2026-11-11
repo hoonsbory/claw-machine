@@ -9,14 +9,30 @@
     <meta name="robots" content="noindex, nofollow" />
     <link
       rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='9' r='5' fill='%23ff6fa5'/%3E%3Ccircle cx='24' cy='9' r='5' fill='%23ff6fa5'/%3E%3Ccircle cx='16' cy='18' r='12' fill='%23ff6fa5'/%3E%3Ccircle cx='12' cy='17' r='1.6' fill='%237a2f55'/%3E%3Ccircle cx='20' cy='17' r='1.6' fill='%237a2f55'/%3E%3C/svg%3E"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg fill='%23ff9aa8' stroke='%237a5646' stroke-width='1.6'%3E%3Ccircle cx='8' cy='9' r='5'/%3E%3Ccircle cx='24' cy='9' r='5'/%3E%3Ccircle cx='16' cy='18' r='12'/%3E%3C/g%3E%3Ccircle cx='12' cy='17' r='1.6' fill='%237a5646'/%3E%3Ccircle cx='20' cy='17' r='1.6' fill='%237a5646'/%3E%3C/svg%3E"
+    />
+    <!--
+      화면 글꼴 Jua(Google Fonts). 받는 동안 첫 화면을 막지 않도록 print 로 받아 두었다가 다 받으면 화면에 적용한다.
+      글꼴 서버가 막혀도 아래 시스템 글꼴로 그대로 동작한다. 외부에서 받는 것은 이 글꼴뿐이다.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Jua&display=swap"
+      media="print"
+      onload="this.media = 'all'"
     />
     <title>인형뽑기</title>
     <style>
-      /* 앱을 받는 동안에도 흰 화면 대신 분홍 바탕과 안내 글자를 보여 준다. 앱이 그려지면 #root 안의 글자는 사라진다. */
+      /*
+       * 앱을 받는 동안에도 흰 화면 대신 하늘 바탕과 안내 글자를 보여 준다. 앱이 그려지면 #root 안의 글자는 사라진다.
+       * 이 파일은 src/theme/tokens.ts 를 불러올 수 없어 색과 글꼴을 직접 적었다. 값은 DESIGN_TOKENS 와 같게 맞춘다:
+       * 하늘 sky #cfeaf7, 크림 cream #fff8ea, 글자 line #7a5646, 글꼴 font.family.
+       */
       body {
         margin: 0;
-        background: linear-gradient(#ffe3ee, #ffc4dc);
+        background: linear-gradient(#cfeaf7, #fff8ea 78%);
         min-height: 100dvh;
       }
       .boot-loading {
@@ -25,8 +41,9 @@
         justify-content: center;
         height: 100dvh;
         margin: 0;
-        color: #c21f5c;
-        font: 700 18px -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+        color: #7a5646;
+        font: 700 20px 'Jua', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+        font-synthesis: none;
       }
     </style>
   </head>

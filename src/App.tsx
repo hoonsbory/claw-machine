@@ -9,6 +9,7 @@ import { ClawRig } from './scene/ClawRig';
 import { GameCanvas } from './scene/GameCanvas';
 import { canWriteStorage, createBrowserStorage } from './session/browserStorage';
 import { useGameSession } from './session/useGameSession';
+import { DESIGN_TOKENS } from './theme/tokens';
 import { Celebration } from './ui/Celebration';
 import { DebugPanel } from './ui/DebugPanel';
 import { DropButton } from './ui/DropButton';
@@ -16,6 +17,7 @@ import { Hud } from './ui/Hud';
 import { Joystick } from './ui/Joystick';
 import { RotateNotice } from './ui/RotateNotice';
 import { SoundToggle } from './ui/SoundToggle';
+import { SkyBackdrop } from './ui/backdrop/SkyBackdrop';
 import { useIsTouchLandscape } from './ui/useIsTouchLandscape';
 
 const STORAGE = createBrowserStorage();
@@ -66,6 +68,7 @@ function App(): ReactElement {
   return (
     <div className={screen}>
       <main className={frame}>
+        <SkyBackdrop />
         <GameCanvas
           instances={session.instances}
           vanishingIds={session.vanishingIds}
@@ -117,23 +120,29 @@ injectGlobal(`
     touch-action: none;
     user-select: none;
     overflow: hidden;
+    background: ${DESIGN_TOKENS.color.skyDeep};
   }
 `);
 
+/** 노트북처럼 넓은 화면에서 9:16 틀이 화면처럼 떠 보이도록 틀 둘레에 까는 옅은 그림자 */
+const FRAME_SHADOW = `0 0 0 ${DESIGN_TOKENS.line.width}px ${DESIGN_TOKENS.color.shadow}, 0 12px 40px ${DESIGN_TOKENS.color.shadow}`;
+
+/** 틀 밖은 같은 하늘색을 조금 진하게 칠해 틀이 화면으로 읽히게 한다 */
 const screen = css`
   display: flex;
   justify-content: center;
   width: 100%;
   height: 100dvh;
-  background: linear-gradient(#ffe3ee, #ffc4dc);
+  background: ${DESIGN_TOKENS.color.skyDeep};
 `;
 
-/** 폰에서는 화면 전체, 넓은 화면에서는 가운데 9:16 세로 틀. 조작부는 이 틀 안에 겹쳐 놓는다. */
+/** 폰에서는 화면 전체, 넓은 화면에서는 가운데 9:16 세로 틀. 바탕 그림·3D 캔버스·조작부를 이 틀 안에 겹쳐 놓는다. */
 const frame = css`
   position: relative;
   width: 100%;
   max-width: calc(100dvh * 9 / 16);
   height: 100dvh;
+  box-shadow: ${FRAME_SHADOW};
   touch-action: none;
   user-select: none;
   overflow: hidden;
