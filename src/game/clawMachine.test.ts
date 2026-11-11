@@ -1,9 +1,8 @@
 import { expect, it } from 'vitest';
-import { DOLL_KINDS } from '../config/dollCatalog';
-import { GAME_CONFIG } from '../config/gameConfig';
 import { createClawState, forgetDolls, getHoldHeight, markWin, stepClaw, type ClawDeps, type ClawInput } from './clawMachine';
 import { getCabinetLayout } from './dollGeometry';
 import { createDollLookup } from './grabJudge';
+import { TEST_DOLL_KINDS, TEST_GAME_CONFIG } from './testFixtures';
 import { seq } from './testHelpers';
 import type { ClawEvent, ClawPhase, ClawState, DollSnapshot } from './types';
 
@@ -25,13 +24,13 @@ const FRAME_TIME = 1 / 60;
 /** runUntil 이 기다리는 최대 시간. 시도 한 번은 이보다 훨씬 짧다. */
 const UNTIL_LIMIT_SECONDS = 30;
 
-const lookup = createDollLookup(DOLL_KINDS, GAME_CONFIG);
-const layout = getCabinetLayout(DOLL_KINDS, GAME_CONFIG);
+const lookup = createDollLookup(TEST_DOLL_KINDS, TEST_GAME_CONFIG);
+const layout = getCabinetLayout(TEST_DOLL_KINDS, TEST_GAME_CONFIG);
 /** 난수를 부르면 실패한다. 난수가 필요한 실행은 run 에 따로 넘긴다. */
-const deps: ClawDeps = { config: GAME_CONFIG, lookup, layout, rng: seq() };
+const deps: ClawDeps = { config: TEST_GAME_CONFIG, lookup, layout, rng: seq() };
 const idleInput: ClawInput = { move: { x: 0, z: 0 }, dropRequested: false, dolls: [], dt: FRAME_TIME };
 
-const initial = createClawState(layout, GAME_CONFIG);
+const initial = createClawState(layout, TEST_GAME_CONFIG);
 const dollA: DollSnapshot = { id: 'a', kindId: 'bear', x: 0, y: 0.5, z: 0 };
 const start: Fixture = { state: initial, dolls: [] };
 const overDoll: Fixture = { state: { ...initial, x: dollA.x, z: dollA.z }, dolls: [dollA] };
@@ -167,11 +166,11 @@ it('오므리는 동안 잡기로 한 인형이 사라지면 빈손으로 올라
 it('한 프레임이 매우 길어도 바닥과 이동 한계를 넘지 않는다 (Review Focus 4)', () => {
   const dropping = stepClaw(start.state, { ...idleInput, dropRequested: true }, deps).state;
   const next = stepClaw(dropping, { ...idleInput, dt: 30 }, deps).state;
-  expect(next.hubY).toBeGreaterThanOrEqual(GAME_CONFIG.claw.hubMinY);
+  expect(next.hubY).toBeGreaterThanOrEqual(TEST_GAME_CONFIG.claw.hubMinY);
   // 긴 프레임도 maxFrameTime 만큼만 진행한다
-  expect(next.hubY).toBeCloseTo(GAME_CONFIG.claw.hubRestY - GAME_CONFIG.claw.dropSpeed * GAME_CONFIG.physics.maxFrameTime);
+  expect(next.hubY).toBeCloseTo(TEST_GAME_CONFIG.claw.hubRestY - TEST_GAME_CONFIG.claw.dropSpeed * TEST_GAME_CONFIG.physics.maxFrameTime);
   const moved = stepClaw(start.state, { ...idleInput, move: { x: 1, z: 1 }, dt: 30 }, deps).state;
-  expect(moved.x).toBeLessThanOrEqual(GAME_CONFIG.claw.moveLimit);
+  expect(moved.x).toBeLessThanOrEqual(TEST_GAME_CONFIG.claw.moveLimit);
 });
 it('입력 상태를 바꾸지 않는다', () => {
   const frozen = Object.freeze({ ...start.state });

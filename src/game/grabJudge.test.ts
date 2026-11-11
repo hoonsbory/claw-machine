@@ -1,21 +1,20 @@
 import { expect, it } from 'vitest';
-import { DOLL_KINDS } from '../config/dollCatalog';
-import { GAME_CONFIG } from '../config/gameConfig';
 import { createDollLookup, decideGrab, findStopHeight } from './grabJudge';
+import { TEST_DOLL_KINDS, TEST_GAME_CONFIG } from './testFixtures';
 import { seq } from './testHelpers';
 import type { DollSnapshot } from './types';
 
 const doll = (id: string, kindId: string, x: number, y: number, z: number): DollSnapshot => ({ id, kindId, x, y, z });
 
-const lookup = createDollLookup(DOLL_KINDS, GAME_CONFIG);
-const base = { claw: { x: 0, z: 0 }, hubY: 1.3, dolls: [], failStreak: 0, lookup, config: GAME_CONFIG, rng: seq(0) };
+const lookup = createDollLookup(TEST_DOLL_KINDS, TEST_GAME_CONFIG);
+const base = { claw: { x: 0, z: 0 }, hubY: 1.3, dolls: [], failStreak: 0, lookup, config: TEST_GAME_CONFIG, rng: seq(0) };
 
 it('아래에 인형이 없으면 바닥 근처에서 멈춘다', () => {
-  expect(findStopHeight({ x: 0, z: 0 }, [], lookup, GAME_CONFIG)).toBe(0.95);
+  expect(findStopHeight({ x: 0, z: 0 }, [], lookup, TEST_GAME_CONFIG)).toBe(0.95);
 });
 it('인형 위에서는 그 인형 크기에 맞는 높이에서 멈춘다', () => {
-  expect(findStopHeight({ x: 0, z: 0 }, [doll('a', 'bear', 0.2, 0.5, 0)], lookup, GAME_CONFIG)).toBeCloseTo(1.3);
-  expect(findStopHeight({ x: 0, z: 0 }, [doll('b', 'frog', 0.2, 0.7, 0)], lookup, GAME_CONFIG)).toBeCloseTo(1.7);
+  expect(findStopHeight({ x: 0, z: 0 }, [doll('a', 'bear', 0.2, 0.5, 0)], lookup, TEST_GAME_CONFIG)).toBeCloseTo(1.3);
+  expect(findStopHeight({ x: 0, z: 0 }, [doll('b', 'frog', 0.2, 0.7, 0)], lookup, TEST_GAME_CONFIG)).toBeCloseTo(1.7);
 });
 it('닿는 범위에 인형이 없으면 잡지 못한다', () => {
   expect(decideGrab({ ...base, dolls: [doll('a', 'bear', 2, 0.5, 0)] })).toBeNull();
@@ -41,7 +40,7 @@ it('보정이 걸려도 너무 빗겨 잡으면 보장하지 않는다', () => {
   expect(decideGrab({ ...base, failStreak: 3, dolls: [doll('a', 'bear', 0.8, 0.5, 0)], rng: seq(0.99, 0.5) })?.slipAt).not.toBe(Infinity);
 });
 it('종류별 집게 힘 덮어쓰기를 따른다', () => {
-  const strong = createDollLookup([{ ...DOLL_KINDS[0], tuning: { grip: 1 } }], GAME_CONFIG);
+  const strong = createDollLookup([{ ...TEST_DOLL_KINDS[0], tuning: { grip: 1 } }], TEST_GAME_CONFIG);
   expect(decideGrab({ ...base, lookup: strong, dolls: [doll('a', 'bear', 0.4, 0.5, 0)], rng: seq(0.8) })?.slipAt).toBe(Infinity);
 });
 it('집게보다 높이 쌓인 인형은 잡지 않는다', () => {

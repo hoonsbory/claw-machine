@@ -1,8 +1,8 @@
 import { expect, it } from 'vitest';
-import { DOLL_KINDS } from '../config/dollCatalog';
 import { consumeResetFlag, loadWonKinds, PROGRESS_KEY, removeResetFlag, saveWonKinds, type KeyValueStorage } from './progressStore';
+import { TEST_DOLL_KINDS } from './testFixtures';
 
-const ids = DOLL_KINDS.map((k) => k.id);
+const ids = TEST_DOLL_KINDS.map((k) => k.id);
 
 /** 메모리에만 두는 저장소. 처음 들어 있을 값을 넣어 줄 수 있다. */
 function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {

@@ -50,7 +50,7 @@
 5. 충돌 도형을 맞춘다(아래 4장).
 6. 조정 패널로 집게 힘을 맞추고, 정한 값을 `src/config/gameConfig.ts` 에 적는다(아래 5장).
 7. `?reset` 을 붙여 기록을 지우고 처음부터 한 판을 끝까지 돌려 본다(아래 6장).
-8. `npm run verify` 와 `npm run build` 가 둘 다 통과하는지 확인한다.
+8. `npm run verify` 와 `npm run build` 가 둘 다 통과하는지 확인한다. 종류·`scale`·집게 힘을 바꿨다고 깨지는 테스트는 없다. `verify` 가 실패하면 `src/config/dollCatalog.test.ts` 의 실패 메시지가 카탈로그나 설정에서 고칠 곳을 알려 준다.
 
 종류 수는 5가 아니어도 된다. `DOLL_KINDS` 에 적은 개수가 화면 위 `0 / 5` 의 전체 수가 된다. 다만 종류마다 3개씩 들어가므로 종류가 많아지면 기계 안이 붐빈다.
 
