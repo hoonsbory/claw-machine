@@ -1,5 +1,5 @@
 import { css, keyframes } from '@emotion/css';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { Component, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import type { DollKind } from '../game/types';
 import { Confetti } from './Confetti';
 import { DollStage } from './DollStage';
@@ -38,7 +38,9 @@ export function Celebration({ kind, isComplete, onClose }: CelebrationProps): Re
     <button type="button" className={overlay} onClick={handleClick} aria-label={getCaptionText(kind, isComplete)} autoFocus>
       <Confetti burst={isComplete ? 'grand' : 'normal'} isReducedMotion={isReducedMotion} />
       <span className={stage}>
-        <DollStage kind={kind} isReducedMotion={isReducedMotion} />
+        <StageBoundary>
+          <DollStage kind={kind} isReducedMotion={isReducedMotion} />
+        </StageBoundary>
       </span>
       <Caption kind={kind} isComplete={isComplete} />
     </button>
@@ -47,6 +49,31 @@ export function Celebration({ kind, isComplete, onClose }: CelebrationProps): Re
 
 /** 뜬 직후 누름을 무시하는 시간(ms) */
 const CLOSE_GUARD_MS = 400;
+
+interface StageBoundaryProps {
+  children: ReactNode;
+}
+
+interface StageBoundaryState {
+  hasFailed: boolean;
+}
+
+/**
+ * 인형을 그리는 작은 3D 캔버스가 실패하면(WebGL 을 더 만들 수 없는 폰 등) 인형만 빼고 그린다.
+ * 오류가 앱 전체로 번져 화면이 하얗게 되지 않고, 인형 이름·글자·색종이는 그대로 보인다.
+ */
+class StageBoundary extends Component<StageBoundaryProps, StageBoundaryState> {
+  state: StageBoundaryState = { hasFailed: false };
+
+  static getDerivedStateFromError(): StageBoundaryState {
+    return { hasFailed: true };
+  }
+
+  render(): ReactNode {
+    if (this.state.hasFailed) return null;
+    return this.props.children;
+  }
+}
 
 type CaptionProps = Omit<CelebrationProps, 'onClose'>;
 
