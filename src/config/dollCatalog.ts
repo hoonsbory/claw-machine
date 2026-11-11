@@ -1,9 +1,9 @@
 import type { DollCollider, DollKind } from '../game/types';
 
-/** 임시 인형 공통 몸통 반지름(scale 적용 전) */
-const PLACEHOLDER_CORE_RADIUS = 0.5;
-const PLACEHOLDER_HEAD_RADIUS = 0.36;
-const PLACEHOLDER_HEAD_Y = 0.62;
+/** 임시 인형 공통 몸통 반지름(scale 적용 전). 임시 도형 모양도 이 치수로 그린다. */
+export const PLACEHOLDER_CORE_RADIUS = 0.5;
+export const PLACEHOLDER_HEAD_RADIUS = 0.36;
+export const PLACEHOLDER_HEAD_Y = 0.62;
 
 /** 임시 인형 공통 충돌 도형: 원점의 몸통 공 + 위쪽 머리 공 */
 const PLACEHOLDER_COLLIDERS: readonly DollCollider[] = [

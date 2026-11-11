@@ -1,10 +1,24 @@
 import { css, injectGlobal } from '@emotion/css';
 import type { ReactElement } from 'react';
+import { DOLL_KINDS } from './config/dollCatalog';
+import { GAME_CONFIG } from './config/gameConfig';
+import { createInstances } from './game/collection';
+import { GameCanvas } from './scene/GameCanvas';
+
+/** 아직 뽑기 진행이 없어서 처음 15개를 그대로 보여 준다 */
+const INSTANCES = createInstances(DOLL_KINDS, GAME_CONFIG.dolls.perKind, new Set());
+const NO_VANISHING: ReadonlySet<string> = new Set();
+
+function ignoreVanished(): void {
+  // 아직 사라지는 인형이 없다
+}
 
 function App(): ReactElement {
   return (
     <div className={screen}>
-      <main className={frame} />
+      <main className={frame}>
+        <GameCanvas instances={INSTANCES} vanishingIds={NO_VANISHING} onVanished={ignoreVanished} />
+      </main>
     </div>
   );
 }
