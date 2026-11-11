@@ -17,12 +17,20 @@ export interface GameCanvasProps {
   instances: readonly DollInstance[];
   vanishingIds: ReadonlySet<string>;
   onVanished: (id: string) => void;
+  /** 충돌 도형을 선으로 그린다(조정 모드에서 모델과 충돌 도형을 맞춰 볼 때) */
+  showColliders?: boolean;
   /** Physics 안에 그려지고, 그 안에서 useDollHandles 로 인형 손잡이를 꺼낼 수 있다 */
   children?: ReactNode;
 }
 
 /** 3D 화면: 고정 카메라, 조명, 물리 세계 안의 기계와 인형 */
-export function GameCanvas({ instances, vanishingIds, onVanished, children }: GameCanvasProps): ReactElement {
+export function GameCanvas({
+  instances,
+  vanishingIds,
+  onVanished,
+  showColliders = false,
+  children,
+}: GameCanvasProps): ReactElement {
   // 캔버스가 살아 있는 동안 같은 Map 하나를 쓴다. 등록은 Map 안만 바꾸므로 다시 그리기를 일으키지 않는다.
   const [dollHandles] = useState((): Map<string, DollHandle> => new Map());
   const register = useCallback(
@@ -62,6 +70,7 @@ export function GameCanvas({ instances, vanishingIds, onVanished, children }: Ga
           colliders={false}
           timeStep={GAME_CONFIG.physics.timeStep}
           updatePriority={PHYSICS_FRAME_PRIORITY}
+          debug={showColliders}
         >
           <DollHandlesContext value={dollHandles}>
             <Cabinet />

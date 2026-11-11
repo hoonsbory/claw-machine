@@ -2,6 +2,7 @@ import { css, injectGlobal } from '@emotion/css';
 import { useEffect, useState, type ReactElement } from 'react';
 import { createSfx, sfxForEvent, vibrate } from './audio/sfx';
 import { DOLL_KINDS } from './config/dollCatalog';
+import { isDebugMode, type TuningOverrides } from './config/runtimeTuning';
 import type { ClawEvent } from './game/types';
 import { useMoveInput } from './input/useMoveInput';
 import { ClawRig } from './scene/ClawRig';
@@ -9,6 +10,7 @@ import { GameCanvas } from './scene/GameCanvas';
 import { createBrowserStorage } from './session/browserStorage';
 import { useGameSession } from './session/useGameSession';
 import { Celebration } from './ui/Celebration';
+import { DebugPanel } from './ui/DebugPanel';
 import { DropButton } from './ui/DropButton';
 import { Hud } from './ui/Hud';
 import { Joystick } from './ui/Joystick';
@@ -21,6 +23,8 @@ const SFX = createSfx();
  * 첫 입력 뒤에도 계속 들어서, 앱 전환 등으로 멈춘 오디오(아이폰)를 다음 입력 때 다시 켠다.
  */
 const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'keydown'] as const;
+/** 주소에 ?debug 를 붙여 열었을 때만 조정 패널과 충돌 도형 선을 보여 준다 */
+const IS_DEBUG_MODE = isDebugMode(window.location.search);
 
 function App(): ReactElement {
   const session = useGameSession(STORAGE);
@@ -28,6 +32,9 @@ function App(): ReactElement {
   const input = useMoveInput({ isBlocked: celebration !== null });
   // 음소거는 저장하지 않는다. 새로 열면 늘 소리가 켜져 있다.
   const [isMuted, setIsMuted] = useState(false);
+  // 조정 패널 값은 저장하지 않는다. ?debug 가 없으면 빈 덮어쓰기 그대로라 gameConfig.ts 값으로 돈다.
+  const [overrides, setOverrides] = useState<TuningOverrides>({});
+  const [failStreak, setFailStreak] = useState(0);
 
   useEffect(() => {
     const unlock = (): void => SFX.unlock();
@@ -53,13 +60,25 @@ function App(): ReactElement {
   return (
     <div className={screen}>
       <main className={frame}>
-        <GameCanvas instances={session.instances} vanishingIds={session.vanishingIds} onVanished={session.handleVanished}>
-          <ClawRig input={input} session={session} onEvent={playClawEvent} />
+        <GameCanvas
+          instances={session.instances}
+          vanishingIds={session.vanishingIds}
+          onVanished={session.handleVanished}
+          showColliders={IS_DEBUG_MODE}
+        >
+          <ClawRig
+            input={input}
+            session={session}
+            onEvent={playClawEvent}
+            overrides={overrides}
+            onFailStreakChange={setFailStreak}
+          />
         </GameCanvas>
         <Hud wonCount={session.wonKindIds.size} totalCount={DOLL_KINDS.length} />
         <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
         <Joystick onMove={input.setStick} />
         <DropButton isDisabled={session.phase !== 'idle'} onPress={input.requestDrop} />
+        {IS_DEBUG_MODE && <DebugPanel overrides={overrides} onChange={setOverrides} failStreak={failStreak} />}
         {celebration !== null && (
           // 종류마다 한 번만 뽑으므로 종류 id 가 축하마다 다르다. 다음 축하는 새로 그려져 처음부터 다시 터진다.
           <Celebration

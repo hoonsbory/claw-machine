@@ -30,6 +30,7 @@ export interface DollKind {
   displayName: string;
   /** null이면 임시 도형을 쓴다 */
   modelUrl: string | null;
+  /** 모델이 없거나, 읽는 동안이거나, 읽지 못했을 때 보여 줄 임시 도형 */
   placeholder: { look: PlaceholderLook; color: string };
   /** 모양과 충돌 도형에 함께 곱한다 */
   scale: number;

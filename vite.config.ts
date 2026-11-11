@@ -6,7 +6,7 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   test: {
-    // spike/·dist/·.claude-worktrees/ 는 테스트 대상이 아니다
+    // dist/·.claude-worktrees/ 는 테스트 대상이 아니다
     include: ['src/**/*.test.{ts,tsx}'],
   },
 })

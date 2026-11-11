@@ -1,5 +1,15 @@
-import type { ReactElement } from 'react';
-import { ConeGeometry, MeshStandardMaterial, SphereGeometry, type BufferGeometry, type Vector3Tuple } from 'three';
+import { Clone, useGLTF } from '@react-three/drei';
+import { Component, Suspense, useMemo, type ReactElement, type ReactNode } from 'react';
+import {
+  Box3,
+  ConeGeometry,
+  MeshStandardMaterial,
+  SphereGeometry,
+  Vector3,
+  type BufferGeometry,
+  type Object3D,
+  type Vector3Tuple,
+} from 'three';
 import { PLACEHOLDER_CORE_RADIUS, PLACEHOLDER_HEAD_RADIUS, PLACEHOLDER_HEAD_Y } from '../config/dollCatalog';
 import type { DollKind, PlaceholderLook } from '../game/types';
 
@@ -7,13 +17,116 @@ export interface DollModelProps {
   kind: DollKind;
 }
 
-/** 인형 하나의 생김새. 모델 파일 읽기는 아직 없어서 modelUrl 과 상관없이 placeholder.look 에 따른 임시 도형을 그린다. */
+/**
+ * 인형 하나의 생김새. kind.scale 을 모양 전체에 곱한다(충돌 도형에는 Doll.tsx 가 같은 배율을 따로 곱한다).
+ * kind.modelUrl 이 있으면 그 .glb 를 그린다. 모델이 없거나, 읽는 동안이거나, 읽지 못했을 때(없는 파일, 깨진 파일)는
+ * placeholder.look 에 따른 임시 도형을 그린다. 모델을 읽지 못해도 그 인형 하나만 임시 도형이 되고 게임은 계속된다.
+ *
+ * 크기 단위 규칙(docs/dolls.md 에 같은 내용을 풀어 두었다)
+ * - scale 을 곱하기 전 단위를 "표준 크기"라 한다. 임시 인형은 이 단위로 높이 약 1.5(몸통 아래 끝 -0.5 ~ 머리 끝 약 1.0)다.
+ * - .glb 모델은 파일 안의 원래 크기·원점과 상관없이 바운딩 박스를 재서 높이를 STANDARD_MODEL_HEIGHT 로 맞추고,
+ *   바닥 가운데를 몸통 공(원점, 반지름 coreRadius)의 아래 끝에 둔다. 파일은 위가 +Y 이기만 하면 된다.
+ * - coreRadius 와 충돌 도형 치수도 표준 크기 단위로 적는다. 그 위에 scale 을 모양과 충돌 도형에 함께 곱해 실물 크기 비율을 낸다.
+ *   축하 화면(DollStage)도 이 표준 크기를 기준으로 인형을 화면 가운데에 맞춘다.
+ */
 export function DollModel({ kind }: DollModelProps): ReactElement {
-  const furMaterial = getFurMaterial(kind.placeholder.color);
-  const headParts = [...FACE_PARTS, ...EAR_PARTS[kind.placeholder.look]];
-
   return (
     <group scale={kind.scale}>
+      <DollShape kind={kind} />
+    </group>
+  );
+}
+
+function DollShape({ kind }: DollModelProps): ReactElement {
+  const placeholder = <PlaceholderShape look={kind.placeholder.look} color={kind.placeholder.color} />;
+  if (kind.modelUrl === null) return placeholder;
+
+  return (
+    <ModelBoundary fallback={placeholder}>
+      <Suspense fallback={placeholder}>
+        <GltfShape url={kind.modelUrl} coreRadius={kind.coreRadius} />
+      </Suspense>
+    </ModelBoundary>
+  );
+}
+
+/** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 인형 곰의 높이(약 1.55)와 같은 크기다. */
+const STANDARD_MODEL_HEIGHT = 1.5;
+
+interface GltfShapeProps {
+  url: string;
+  coreRadius: number;
+}
+
+/**
+ * .glb 모델 하나. 읽은 장면은 주소마다 한 번만 읽어 두고 게임 화면과 축하 화면이 같이 쓰므로, 인형마다 복제(Clone)해서 그린다.
+ * 복제본은 도형·재질을 원본과 나눠 쓴다. dispose={null} 로, 이 인형이 빠질 때(뽑혀 사라질 때, 축하 화면을 닫을 때)
+ * 다른 인형과 다른 캔버스가 아직 쓰는 도형·재질을 지우지 않게 한다.
+ */
+function GltfShape({ url, coreRadius }: GltfShapeProps): ReactElement {
+  const { scene } = useGLTF(url);
+  const fit = useMemo((): ModelFit => fitToStandardSize(scene, coreRadius), [scene, coreRadius]);
+
+  return (
+    <group dispose={null} position={fit.position} scale={fit.scale}>
+      <Clone object={scene} castShadow />
+    </group>
+  );
+}
+
+/** 모델을 표준 크기에 맞추는 배율과 옮길 자리 */
+interface ModelFit {
+  scale: number;
+  position: Vector3Tuple;
+}
+
+/** 바운딩 박스로 높이를 STANDARD_MODEL_HEIGHT 에 맞추고, 바닥 가운데가 몸통 공 아래 끝(y = -coreRadius)에 오게 옮긴다 */
+function fitToStandardSize(scene: Object3D, coreRadius: number): ModelFit {
+  const box = new Box3().setFromObject(scene);
+  const height = box.max.y - box.min.y;
+  // 그릴 도형이 없거나 납작한 파일은 크기를 잴 수 없어 원래 크기 그대로 바닥만 맞춘다
+  if (box.isEmpty() || height <= 0) return { scale: 1, position: [0, -coreRadius, 0] };
+
+  const scale = STANDARD_MODEL_HEIGHT / height;
+  const center = box.getCenter(new Vector3());
+  return { scale, position: [-center.x * scale, -coreRadius - box.min.y * scale, -center.z * scale] };
+}
+
+interface ModelBoundaryProps {
+  fallback: ReactNode;
+  children: ReactNode;
+}
+
+interface ModelBoundaryState {
+  hasFailed: boolean;
+}
+
+/** 모델을 읽지 못하면 이 인형만 임시 도형으로 바꾼다. 오류가 캔버스나 게임 전체로 번지지 않는다. */
+class ModelBoundary extends Component<ModelBoundaryProps, ModelBoundaryState> {
+  state: ModelBoundaryState = { hasFailed: false };
+
+  static getDerivedStateFromError(): ModelBoundaryState {
+    return { hasFailed: true };
+  }
+
+  render(): ReactNode {
+    if (this.state.hasFailed) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
+interface PlaceholderShapeProps {
+  look: PlaceholderLook;
+  color: string;
+}
+
+/** 코드로 만든 임시 인형: 몸통 공, 머리 공, 얼굴, 종류마다 다른 귀 */
+function PlaceholderShape({ look, color }: PlaceholderShapeProps): ReactElement {
+  const furMaterial = getFurMaterial(color);
+  const headParts = [...FACE_PARTS, ...EAR_PARTS[look]];
+
+  return (
+    <>
       <mesh geometry={SPHERE} material={furMaterial} scale={PLACEHOLDER_CORE_RADIUS} castShadow />
       {/* 머리 묶음 안의 치수는 머리 반지름을 1로 본 값이다 */}
       <group position={[0, PLACEHOLDER_HEAD_Y, 0]} scale={PLACEHOLDER_HEAD_RADIUS}>
@@ -30,7 +143,7 @@ export function DollModel({ kind }: DollModelProps): ReactElement {
           />
         ))}
       </group>
-    </group>
+    </>
   );
 }
 

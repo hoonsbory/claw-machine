@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
+import type { TuningOverrides } from '../config/runtimeTuning';
 import { createInstances } from '../game/collection';
 import { getDollMetrics } from '../game/dollGeometry';
 import type { ClawEvent, DollKind } from '../game/types';
@@ -15,12 +16,16 @@ export interface ClawRigProps {
   session: GameSession;
   /** 집게 상태 흐름이 알리는 일(효과음·진동) */
   onEvent: (event: ClawEvent) => void;
+  /** 조정 패널에서 바꾼 집기 수치. 다음 시도부터 적용된다. */
+  overrides: TuningOverrides;
+  /** 연속 실패 수가 바뀔 때만 불린다(조정 패널 표시용) */
+  onFailStreakChange: (failStreak: number) => void;
 }
 
 /** 물리 세계 안(GameCanvas 의 children)에서 인형 손잡이를 꺼내 집게 루프를 돌리고 집게를 그린다 */
-export function ClawRig({ input, session, onEvent }: ClawRigProps): ReactElement {
+export function ClawRig({ input, session, onEvent, overrides, onFailStreakChange }: ClawRigProps): ReactElement {
   const dolls = useDollHandles();
-  const view = useClawLoop({ input, session, dolls, kindOf, onEvent });
+  const view = useClawLoop({ input, session, dolls, kindOf, onEvent, overrides, onFailStreakChange });
   return <Claw view={view} maxCoreRadius={MAX_CORE_RADIUS} showGuide />;
 }
 
