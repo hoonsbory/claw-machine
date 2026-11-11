@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useRef, type PointerEvent, type ReactElement } from 'react';
+import { useCallback, useEffect, useRef, type PointerEvent, type ReactElement } from 'react';
 import { clampLength } from '../game/math';
 import type { Vec2 } from '../game/types';
 
@@ -8,19 +8,47 @@ export interface JoystickProps {
   onMove: (move: Vec2) => void;
 }
 
-/** 왼쪽 아래 조이스틱. 처음 누른 손가락 하나만 따라가므로 다른 손가락으로 내리기 버튼을 함께 눌러도 된다. */
+/**
+ * 왼쪽 아래 조이스틱. 처음 누른 손가락 하나만 따라가므로 다른 손가락으로 내리기 버튼을 함께 눌러도 된다.
+ * 따라가던 손가락을 pointerup·pointercancel 없이 놓쳐도(홈 제스처, 알림 창 내리기) 막대가 멈춘 채 죽지 않는다:
+ * 붙잡기를 잃거나 창이 가려지면 가운데로 돌리고, 붙잡기가 이미 풀린 손가락을 따라가고 있었으면 새로 누른 손가락으로 바꾼다.
+ */
 export function Joystick({ onMove }: JoystickProps): ReactElement {
   const knobRef = useRef<HTMLDivElement>(null);
   const activePointerId = useRef<number | null>(null);
 
-  const tilt = (move: Vec2): void => {
-    knobRef.current?.style.setProperty(KNOB_X_VAR, `${move.x * KNOB_TRAVEL}px`);
-    knobRef.current?.style.setProperty(KNOB_Y_VAR, `${move.z * KNOB_TRAVEL}px`);
-    onMove(move);
-  };
+  const tilt = useCallback(
+    (move: Vec2): void => {
+      knobRef.current?.style.setProperty(KNOB_X_VAR, `${move.x * KNOB_TRAVEL}px`);
+      knobRef.current?.style.setProperty(KNOB_Y_VAR, `${move.z * KNOB_TRAVEL}px`);
+      onMove(move);
+    },
+    [onMove],
+  );
+
+  /** 따라가던 손가락을 놓고 가운데로 돌린다 */
+  const letGo = useCallback((): void => {
+    activePointerId.current = null;
+    tilt(CENTER);
+  }, [tilt]);
+
+  // 창이 포커스를 잃거나 가려지면 손가락 이벤트가 더 오지 않을 수 있어 막대를 놓는다
+  useEffect(() => {
+    const letGoWhenHidden = (): void => {
+      if (document.hidden) letGo();
+    };
+    window.addEventListener('blur', letGo);
+    document.addEventListener('visibilitychange', letGoWhenHidden);
+    return (): void => {
+      window.removeEventListener('blur', letGo);
+      document.removeEventListener('visibilitychange', letGoWhenHidden);
+    };
+  }, [letGo]);
 
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>): void => {
-    if (activePointerId.current !== null) return;
+    const trackedId = activePointerId.current;
+    const isTrackingLivePointer = trackedId !== null && event.currentTarget.hasPointerCapture(trackedId);
+    if (isTrackingLivePointer) return;
 
     activePointerId.current = event.pointerId;
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -32,11 +60,10 @@ export function Joystick({ onMove }: JoystickProps): ReactElement {
     tilt(readTilt(event));
   };
 
+  /** 뗐거나, 취소됐거나, 붙잡기를 잃은 손가락이 따라가던 손가락이면 놓는다 */
   const handlePointerEnd = (event: PointerEvent<HTMLDivElement>): void => {
     if (event.pointerId !== activePointerId.current) return;
-
-    activePointerId.current = null;
-    tilt(CENTER);
+    letGo();
   };
 
   return (
@@ -46,6 +73,7 @@ export function Joystick({ onMove }: JoystickProps): ReactElement {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerEnd}
       onPointerCancel={handlePointerEnd}
+      onLostPointerCapture={handlePointerEnd}
       aria-hidden
     >
       <div ref={knobRef} className={knob} />
