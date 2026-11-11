@@ -49,7 +49,7 @@ describe('실제 인형 카탈로그와 설정', () => {
     const isReachable = Math.abs(home.x) <= moveLimit && Math.abs(home.z) <= moveLimit;
     expect(
       isReachable,
-      `배출구(한 변 ${chuteSize.toFixed(2)}) 가운데 (${home.x.toFixed(2)}, ${home.z.toFixed(2)}) 가 집게 이동 한계 ±${moveLimit} 밖이다. 배출구는 가장 큰 인형에 맞춰지므로 dollCatalog.ts 에서 가장 큰 종류의 scale 이나 coreRadius 를 줄인다(gameConfig.ts 의 claw.moveLimit 를 줄였다면 되돌린다).`,
+      `배출구(한 변 ${chuteSize.toFixed(2)}) 가운데 (${home.x.toFixed(2)}, ${home.z.toFixed(2)}) 가 집게 이동 한계 ±${moveLimit} 밖이다. 인형 크기로는 생기지 않는 상황이므로 gameConfig.ts 에서 claw.moveLimit 이나 cabinet.floorHalf 를 바꿨는지 확인하고 되돌린다.`,
     ).toBe(true);
   });
 
