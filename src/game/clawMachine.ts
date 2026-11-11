@@ -68,11 +68,14 @@ function stepIdle(state: ClawState, input: ClawInput, dt: number, config: GameCo
   return { state: { ...enterPhase(moved, 'drop'), wonThisTry: false }, events: [{ type: 'dropStarted' }] };
 }
 
-/** 아래 인형이나 바닥 근처에 닿으면 그 높이에 멈추고, 무엇을 잡고 언제 놓칠지 그 순간에 정한다 */
+/**
+ * 아래 인형이나 바닥 근처에 닿으면 그 높이에 멈추고, 무엇을 잡고 언제 놓칠지 그 순간에 정한다.
+ * 내리는 중에는 위로 올라가지 않는다: 멈출 높이가 이미 지금 높이 이상이면 그 자리에서 멈춘다.
+ */
 function stepDrop(state: ClawState, dolls: readonly DollSnapshot[], dt: number, deps: ClawDeps): ClawStep {
   const { config, lookup, rng } = deps;
   const claw: Vec2 = { x: state.x, z: state.z };
-  const stopY = findStopHeight(claw, dolls, lookup, config);
+  const stopY = Math.min(findStopHeight(claw, dolls, lookup, config), state.hubY);
   const hubY = state.hubY - config.claw.dropSpeed * dt;
   if (hubY > stopY) return { state: { ...state, hubY }, events: [] };
 
