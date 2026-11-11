@@ -17,7 +17,7 @@ interface RunResult {
   events: ClawEvent[];
 }
 
-type RunInput = Partial<Pick<ClawInput, 'move' | 'dropRequested'>>;
+type RunInput = Partial<Pick<ClawInput, 'move' | 'dropRequested' | 'hasTryLeft'>>;
 type StopWhen = (result: RunResult) => boolean;
 
 const FRAME_TIME = 1 / 60;
@@ -28,7 +28,7 @@ const lookup = createDollLookup(TEST_DOLL_KINDS, TEST_GAME_CONFIG);
 const layout = getCabinetLayout(TEST_DOLL_KINDS, TEST_GAME_CONFIG);
 /** 난수를 부르면 실패한다. 난수가 필요한 실행은 run 에 따로 넘긴다. */
 const deps: ClawDeps = { config: TEST_GAME_CONFIG, lookup, layout, rng: seq() };
-const idleInput: ClawInput = { move: { x: 0, z: 0 }, dropRequested: false, dolls: [], dt: FRAME_TIME };
+const idleInput: ClawInput = { move: { x: 0, z: 0 }, dropRequested: false, hasTryLeft: true, dolls: [], dt: FRAME_TIME };
 
 const initial = createClawState(layout, TEST_GAME_CONFIG);
 const dollA: DollSnapshot = { id: 'a', kindId: 'bear', x: 0, y: 0.5, z: 0 };
@@ -118,6 +118,18 @@ it('인형이 쉬는 높이보다 높이 쌓여 있으면 그 자리에서 멈�
   expect(closing.hubY).toBe(stacked.state.hubY);
   // 잡기 판정은 평소대로 그 순간에 한다
   expect(closing.pendingGrab?.dollId).toBe('a');
+});
+it('남은 기회가 없으면 내리기 요청이 와도 시도를 시작하지 않고, 조이스틱으로는 움직인다', () => {
+  const next = stepClaw(start.state, { ...idleInput, dropRequested: true, hasTryLeft: false, move: { x: 1, z: 0 } }, deps);
+  expect(next.events).toEqual([]);
+  expect(next.state.phase).toBe('idle');
+  expect(next.state.x).toBeGreaterThan(start.state.x);
+});
+it('마지막 기회로 시작한 시도는 도중에 기회가 0 이 되어도 끝까지 마친다', () => {
+  const dropping = stepClaw(overDoll.state, { ...idleInput, dropRequested: true, dolls: overDoll.dolls }, deps).state;
+  const { state, events } = run({ ...overDoll, state: dropping }, { hasTryLeft: false }, 12);
+  expect(events.map((e) => e.type)).toEqual(['grabbed', 'released', 'tryEnded']);
+  expect(state.phase).toBe('idle');
 });
 it('시도 중에는 내리기와 이동 입력을 무시한다', () => {
   const dropping = stepClaw(start.state, { ...idleInput, dropRequested: true }, deps).state;

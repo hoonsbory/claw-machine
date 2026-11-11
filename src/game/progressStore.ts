@@ -1,3 +1,5 @@
+import { TRIES_KEY } from './triesStore';
+
 /** 뽑은 종류 기록을 두는 저장소 키. 저장 형식을 바꾸면 끝의 버전을 올린다. */
 export const PROGRESS_KEY = 'claw-machine:won-kinds:v1';
 
@@ -66,7 +68,8 @@ function writeStoredArray(storage: KeyValueStorage, key: string, values: readonl
 }
 
 /**
- * 주소 쿼리에 reset 매개변수가 있으면(`?reset`, `?reset=1`, `?debug&reset`) 뽑은 기록과 닫지 않은 축하 기록을 지우고 true 를 돌려준다.
+ * 주소 쿼리에 reset 매개변수가 있으면(`?reset`, `?reset=1`, `?debug&reset`) 뽑은 기록, 닫지 않은 축하 기록, 남은 기회를 지우고 true 를 돌려준다.
+ * 남은 기회를 지우면 처음 기회 수로 다시 시작한다.
  * 이름이 정확히 같아야 한다(`?preset=1`, `?resetx` 는 아니다). 저장소가 막혀 지우지 못해도 true 다.
  */
 export function consumeResetFlag(search: string, storage: KeyValueStorage): boolean {
@@ -76,6 +79,7 @@ export function consumeResetFlag(search: string, storage: KeyValueStorage): bool
   try {
     storage.removeItem(PROGRESS_KEY);
     storage.removeItem(UNSEEN_KEY);
+    storage.removeItem(TRIES_KEY);
   } catch {
     // 저장소가 막혀 있으면 읽기도 막혀 어차피 빈 기록으로 시작한다.
   }

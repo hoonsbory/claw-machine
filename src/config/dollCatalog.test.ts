@@ -53,6 +53,15 @@ describe('실제 인형 카탈로그와 설정', () => {
     ).toBe(true);
   });
 
+  it('처음 기회 수는 1 이상의 정수이고 최대 기회 수를 넘지 않는다', () => {
+    const { initial, max } = GAME_CONFIG.tries;
+    const isValid = Number.isInteger(initial) && Number.isInteger(max) && initial >= 1 && initial <= max;
+    expect(
+      isValid,
+      `gameConfig.ts 의 tries 가 { initial: ${initial}, max: ${max} } 이다. initial(처음 기회 수)은 1 이상의 정수로, max(충전 최대) 이하로 적는다.`,
+    ).toBe(true);
+  });
+
   it('종류당 인형 수가 1 이상이다', () => {
     expect(
       GAME_CONFIG.dolls.perKind,

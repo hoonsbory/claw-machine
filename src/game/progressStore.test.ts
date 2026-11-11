@@ -8,33 +8,11 @@ import {
   saveUnseenKinds,
   saveWonKinds,
   UNSEEN_KEY,
-  type KeyValueStorage,
 } from './progressStore';
 import { TEST_DOLL_KINDS } from './testFixtures';
+import { memoryStorage, throwingStorage } from './testHelpers';
 
 const ids = TEST_DOLL_KINDS.map((k) => k.id);
-
-/** 메모리에만 두는 저장소. 처음 들어 있을 값을 넣어 줄 수 있다. */
-function memoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
-  const values = new Map(Object.entries(initial));
-  return {
-    getItem: (key: string): string | null => values.get(key) ?? null,
-    setItem: (key: string, value: string): void => {
-      values.set(key, value);
-    },
-    removeItem: (key: string): void => {
-      values.delete(key);
-    },
-  };
-}
-
-/** 어떤 접근이든 예외를 던지는 저장소(저장소가 막힌 브라우저 흉내) */
-function throwingStorage(): KeyValueStorage {
-  const fail = (): never => {
-    throw new Error('저장소를 쓸 수 없다');
-  };
-  return { getItem: fail, setItem: fail, removeItem: fail };
-}
 
 it('저장한 것을 그대로 읽는다', () => {
   const s = memoryStorage();

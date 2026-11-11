@@ -60,6 +60,11 @@ export interface GameConfig {
     /** 놓이거나 다시 떨어진 뒤 이 시간(초)이 지나면 멈추지 않았어도 처음 떨어지기가 끝난 것으로 본다 */
     readonly firstFallMaxTime: number;
   };
+  /** 남은 기회: 처음 기회 수와 충전으로 늘릴 수 있는 최대 */
+  readonly tries: {
+    readonly initial: number;
+    readonly max: number;
+  };
   /** 물리 엔진 */
   readonly physics: {
     readonly gravityY: number;
@@ -94,6 +99,7 @@ export const GAME_CONFIG = {
   },
   dolls: { perKind: 4, vanishTime: 0.3, chuteDetectMargin: 0.2, respawnBelowY: -5, outOfBoundsMargin: 1 },
   spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
+  tries: { initial: 5, max: 99 },
   physics: {
     gravityY: -20, timeStep: 1 / 60,
     doll: { friction: 0.5, restitution: 0.15, linearDamping: 0.05, angularDamping: 0.35 },

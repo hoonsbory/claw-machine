@@ -44,7 +44,7 @@ interface ClawLoopArgs {
  * 집게 상태 흐름을 물리 세계와 잇는다. 물리 한 단계 직전마다 같은 시간(physics.timeStep)만큼 집게를 진행해
  * 인형 위치 읽기 → 상태 진행 → 들고 있는 인형 끌어당기기 → 배출구 획득 확인을 한다.
  * 돌려주는 view 는 매 프레임 앞뒤 물리 단계 사이를 보간한 집게 모양이다. 상태는 모두 ref 에 두고,
- * React 상태는 단계가 바뀔 때와 획득할 때(session), 연속 실패 수가 바뀔 때(onFailStreakChange)만 바뀐다.
+ * React 상태는 단계가 바뀔 때, 내리기를 시작해 기회를 쓸 때, 획득할 때(session), 연속 실패 수가 바뀔 때(onFailStreakChange)만 바뀐다.
  */
 export function useClawLoop({
   input,
@@ -63,7 +63,8 @@ export function useClawLoop({
   // 이 루프가 획득으로 지운 인형. 사라지는 연출 동안 손잡이가 남아 있어도 다시 집거나 획득하지 않는다.
   // session.vanishingIds 는 다시 그려진 뒤에야 바뀌므로 바로 다음 물리 단계부터 빼려면 여기 따로 둔다.
   const removedIds = useRef(new Set<string>());
-  // 이 페이지를 연 뒤 내리기를 한 번이라도 요청했는지. 그 전에 배출구에 굴러 들어간 인형은 뽑은 것으로 치지 않는다.
+  // 이 페이지를 연 뒤 내리기를 한 번이라도 시작했는지. 그 전에 배출구에 굴러 들어간 인형은 뽑은 것으로 치지 않는다.
+  // 요청이 아니라 시작으로 센다: 기회가 0 일 때 누른 내리기로 굴러 들어간 인형을 기회 없이 뽑게 하지 않는다.
   const hasDropped = useRef(false);
   // 물리 세계가 첫 단계를 돌았는지. 이 루프는 물리 세계가 준비된 뒤에야 돈다.
   const hasStepped = useRef(false);
@@ -81,9 +82,19 @@ export function useClawLoop({
     // 물리 세계가 준비되기 전(불러오는 동안)에 누른 내리기는 쌓아 두지 않고 버린다. 준비되자마자 집게가 저절로 내려가지 않는다.
     const dropRequested = input.takeDropRequest() && hasStepped.current;
     hasStepped.current = true;
-    if (dropRequested) hasDropped.current = true;
-    const { state, events } = stepClaw(before, { move: input.readMove(), dropRequested, dolls: snapshots, dt: TIME_STEP }, deps);
-    for (const event of events) onEvent(event);
+    const { state, events } = stepClaw(
+      before,
+      { move: input.readMove(), dropRequested, hasTryLeft: session.hasTryLeft(), dolls: snapshots, dt: TIME_STEP },
+      deps,
+    );
+    for (const event of events) {
+      // 내리기가 시작되는 순간 기회를 하나 쓴다. 남은 기회 표시도 이때 바뀐다.
+      if (event.type === 'dropStarted') {
+        hasDropped.current = true;
+        session.reportDropStarted();
+      }
+      onEvent(event);
+    }
     if (state.phase !== before.phase) session.setPhase(state.phase);
 
     const nextSway = followSway(sway.current, state, TIME_STEP);

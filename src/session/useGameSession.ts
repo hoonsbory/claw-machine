@@ -14,12 +14,19 @@ import {
   type CelebrationQueue,
   type WinCelebration,
 } from './celebrationQueue';
+import { useTries } from './useTries';
 
-/** 한 판의 React 상태: 기계 안 인형, 사라지는 중인 인형, 뽑은 종류, 축하할 인형, 집게 단계 */
+/** 한 판의 React 상태: 기계 안 인형, 사라지는 중인 인형, 뽑은 종류, 남은 기회, 축하할 인형, 집게 단계 */
 export interface GameSession {
   instances: readonly DollInstance[];
   vanishingIds: ReadonlySet<string>;
   wonKindIds: ReadonlySet<string>;
+  /** 남은 기회. 내리기가 시작되는 순간 하나 줄고, 다른 탭에서 충전하면 다시 읽는다. */
+  tries: number;
+  /** 남은 기회가 있는지. 물리 단계 안에서 다시 그려지기를 기다리지 않고 바로 앞 값을 읽는다. */
+  hasTryLeft(): boolean;
+  /** 내리기가 시작됐다(dropStarted). 기회를 하나 쓴다. */
+  reportDropStarted(): void;
   /**
    * 지금 보여 줄 축하. 축하 화면이 떠 있는 동안 다른 종류를 또 뽑으면 뒤에 줄 서고, 닫을 때마다 다음 것이 나온다.
    * 닫지 않은 축하는 저장해 두어, 새로고침하거나 다시 열어도 그 축하부터 다시 보여 준다.
@@ -53,6 +60,9 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
   const [celebrations, setCelebrations] = useState((): CelebrationQueue => loadCelebrations(storage, collection.wonKindIds));
   const latestCelebrations = useRef(celebrations);
   const [phase, setPhase] = useState<ClawPhase>('idle');
+  const { tries, readLatest: readLatestTries, spend: reportDropStarted } = useTries(storage);
+
+  const hasTryLeft = useCallback((): boolean => readLatestTries() > 0, [readLatestTries]);
 
   const commit = useCallback((next: Collection): void => {
     latest.current = next;
@@ -111,6 +121,9 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
 
   return {
     ...collection,
+    tries,
+    hasTryLeft,
+    reportDropStarted,
     celebration: currentCelebration(celebrations),
     phase,
     reportChuteArrival,

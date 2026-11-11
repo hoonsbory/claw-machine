@@ -17,6 +17,12 @@ export interface ClawInput {
   /** 조이스틱 기울기. 각 축 -1~1 */
   move: Vec2;
   dropRequested: boolean;
+  /**
+   * 남은 기회가 있는지. 없으면 내리기 요청이 와도 새 시도를 시작하지 않는다(조이스틱 이동은 된다).
+   * 시도를 시작하는 곳이 여기 한 곳이라, 버튼·키보드 등 어느 입력으로 요청해도 기회 없이는 시작하지 않는다.
+   * 이미 시작한 시도는 도중에 기회가 0 이 되어도 끝까지 마친다.
+   */
+  hasTryLeft: boolean;
   dolls: readonly DollSnapshot[];
   /** 이번에 나아갈 시간(초). 루프는 물리 한 단계(physics.timeStep)씩 넘긴다. 길게 넘겨도 단계마다 바닥·이동 한계·목표 높이에서 멈춘다. */
   dt: number;
@@ -54,7 +60,7 @@ function andThen(first: ClawStep, next: (state: ClawState) => ClawStep): ClawSte
   return { state: second.state, events: [...first.events, ...second.events] };
 }
 
-/** 조이스틱대로 이동 한계 안에서 움직이고, 내리기 요청이 오면 새 시도를 시작한다 */
+/** 조이스틱대로 이동 한계 안에서 움직이고, 남은 기회가 있을 때 내리기 요청이 오면 새 시도를 시작한다 */
 function stepIdle(state: ClawState, input: ClawInput, dt: number, config: GameConfig): ClawStep {
   const { moveLimit, moveSpeed } = config.claw;
   const distance = moveSpeed * dt;
@@ -63,7 +69,8 @@ function stepIdle(state: ClawState, input: ClawInput, dt: number, config: GameCo
     x: clamp(state.x + input.move.x * distance, -moveLimit, moveLimit),
     z: clamp(state.z + input.move.z * distance, -moveLimit, moveLimit),
   };
-  if (!input.dropRequested) return { state: moved, events: [] };
+  const canStartTry = input.dropRequested && input.hasTryLeft;
+  if (!canStartTry) return { state: moved, events: [] };
 
   return { state: { ...enterPhase(moved, 'drop'), wonThisTry: false }, events: [{ type: 'dropStarted' }] };
 }
