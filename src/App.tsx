@@ -60,16 +60,16 @@ function App(): ReactElement {
         <SoundToggle isMuted={isMuted} onToggle={toggleMute} />
         <Joystick onMove={input.setStick} />
         <DropButton isDisabled={session.phase !== 'idle'} onPress={input.requestDrop} />
+        {celebration !== null && (
+          // 종류마다 한 번만 뽑으므로 종류 id 가 축하마다 다르다. 다음 축하는 새로 그려져 처음부터 다시 터진다.
+          <Celebration
+            key={celebration.kind.id}
+            kind={celebration.kind}
+            isComplete={celebration.isComplete}
+            onClose={session.closeCelebration}
+          />
+        )}
       </main>
-      {celebration !== null && (
-        // 종류마다 한 번만 뽑으므로 종류 id 가 축하마다 다르다. 다음 축하는 새로 그려져 처음부터 다시 터진다.
-        <Celebration
-          key={celebration.kind.id}
-          kind={celebration.kind}
-          isComplete={celebration.isComplete}
-          onClose={session.closeCelebration}
-        />
-      )}
     </div>
   );
 }

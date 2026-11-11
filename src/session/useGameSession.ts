@@ -3,13 +3,15 @@ import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { applyWin, createInstances, type DollInstance } from '../game/collection';
 import { loadWonKinds, saveWonKinds, type KeyValueStorage } from '../game/progressStore';
-import type { ClawPhase, DollKind } from '../game/types';
-
-/** 획득 한 번의 축하. 5종을 다 채운 획득이면 isComplete 다. */
-export interface WinCelebration {
-  kind: DollKind;
-  isComplete: boolean;
-}
+import type { ClawPhase } from '../game/types';
+import {
+  celebrationForWin,
+  currentCelebration,
+  dequeueCelebration,
+  enqueueCelebration,
+  type CelebrationQueue,
+  type WinCelebration,
+} from './celebrationQueue';
 
 /** 한 판의 React 상태: 기계 안 인형, 사라지는 중인 인형, 뽑은 종류, 축하할 인형, 집게 단계 */
 export interface GameSession {
@@ -40,8 +42,7 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
   // 물리 단계 안에서 같은 프레임에 여러 번 불려도 바로 앞 결과를 보도록 최신 값을 ref 에도 둔다.
   // 같은 종류 둘이 한꺼번에 배출구에 들어가도 획득은 한 번만 처리된다.
   const latest = useRef(collection);
-  // 뽑은 순서대로 줄 세운다. 하나도 버리지 않는다.
-  const [celebrations, setCelebrations] = useState<readonly WinCelebration[]>([]);
+  const [celebrations, setCelebrations] = useState<CelebrationQueue>([]);
   const [phase, setPhase] = useState<ClawPhase>('idle');
 
   const commit = useCallback((next: Collection): void => {
@@ -61,8 +62,8 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
         wonKindIds: result.wonKindIds,
       });
       saveWonKinds(storage, result.wonKindIds);
-      const next: WinCelebration = { kind: getKind(result.wonKindId), isComplete: result.isComplete };
-      setCelebrations((queue): readonly WinCelebration[] => [...queue, next]);
+      const celebration = celebrationForWin(result, DOLL_KINDS);
+      setCelebrations((queue): CelebrationQueue => enqueueCelebration(queue, celebration));
       return result.removedIds;
     },
     [commit, storage],
@@ -84,17 +85,20 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
     [commit],
   );
 
-  const closeCelebration = useCallback(
-    (): void => setCelebrations((queue): readonly WinCelebration[] => queue.slice(1)),
-    [],
-  );
-  const celebration = celebrations[0] ?? null;
+  const closeCelebration = useCallback((): void => setCelebrations(dequeueCelebration), []);
 
-  return { ...collection, celebration, phase, reportChuteArrival, handleVanished, setPhase, closeCelebration };
+  return {
+    ...collection,
+    celebration: currentCelebration(celebrations),
+    phase,
+    reportChuteArrival,
+    handleVanished,
+    setPhase,
+    closeCelebration,
+  };
 }
 
 const KIND_IDS = DOLL_KINDS.map((kind): string => kind.id);
-const KIND_BY_ID = new Map(DOLL_KINDS.map((kind): [string, DollKind] => [kind.id, kind]));
 
 function loadCollection(storage: KeyValueStorage): Collection {
   const wonKindIds = loadWonKinds(storage, KIND_IDS);
@@ -103,11 +107,4 @@ function loadCollection(storage: KeyValueStorage): Collection {
     vanishingIds: new Set(),
     wonKindIds,
   };
-}
-
-/** 카탈로그에 없는 종류는 코드 실수이므로 바로 던진다 */
-function getKind(kindId: string): DollKind {
-  const kind = KIND_BY_ID.get(kindId);
-  if (kind === undefined) throw new Error(`카탈로그에 없는 인형 종류: ${kindId}`);
-  return kind;
 }
