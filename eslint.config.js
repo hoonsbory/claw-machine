@@ -23,4 +23,12 @@ export default defineConfig([
       '@typescript-eslint/explicit-function-return-type': 'error',
     },
   },
+  {
+    // 저장소 도구(tools/)는 브라우저가 아니라 Node 로 도는 스크립트다
+    files: ['tools/**/*.mjs'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ])

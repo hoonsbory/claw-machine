@@ -25,3 +25,7 @@ dist-ssr
 
 # 브라우저 점검 산출물
 .playwright-mcp
+
+# 주인이 저장소 맨 위에 두는 무거운 원본 모델과 참고 사진(올리는 모델은 public/dolls/ 의 줄인 파일뿐)
+/*.glb
+/*.webp
