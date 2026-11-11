@@ -22,10 +22,19 @@ it('기계 밖이나 바닥 아래로 나간 인형을 알아챈다 (Review Focu
   expect(isOutOfBounds({ x: 4.5, y: 1, z: 0 }, GAME_CONFIG)).toBe(true);
   expect(isOutOfBounds({ x: 2.9, y: 0.5, z: -2.9 }, GAME_CONFIG)).toBe(false);
 });
+const overChute = { x: layout.home.x, y: 1.6, z: layout.home.z };
+const falling = { sinceSpawn: 1, hasSettled: false };
+const settled = { sinceSpawn: 1, hasSettled: true };
+
 it('처음 떨어지다 배출구 위로 넘어간 인형만 다시 떨어뜨린다', () => {
-  const overChute = { x: layout.home.x, y: 1.6, z: layout.home.z };
-  expect(needsRedrop(overChute, true, layout, GAME_CONFIG)).toBe(true);
-  expect(needsRedrop(overChute, false, layout, GAME_CONFIG)).toBe(false);
-  expect(needsRedrop({ x: 0, y: 0.5, z: 0 }, true, layout, GAME_CONFIG)).toBe(false);
-  expect(needsRedrop({ x: 0, y: -6, z: 0 }, false, layout, GAME_CONFIG)).toBe(true);
+  expect(needsRedrop(overChute, falling, layout, GAME_CONFIG)).toBe(true);
+  expect(needsRedrop(overChute, settled, layout, GAME_CONFIG)).toBe(false);
+  expect(needsRedrop({ x: 0, y: 0.5, z: 0 }, falling, layout, GAME_CONFIG)).toBe(false);
+  expect(needsRedrop({ x: 0, y: -6, z: 0 }, settled, layout, GAME_CONFIG)).toBe(true);
+});
+it('멈추지 않은 인형도 처음 떨어진 지 정한 시간이 지나면 배출구에 들어가도 그대로 둔다', () => {
+  const cap = GAME_CONFIG.spawn.firstFallMaxTime;
+  expect(cap).toBe(6);
+  expect(needsRedrop(overChute, { sinceSpawn: cap - 0.1, hasSettled: false }, layout, GAME_CONFIG)).toBe(true);
+  expect(needsRedrop(overChute, { sinceSpawn: cap, hasSettled: false }, layout, GAME_CONFIG)).toBe(false);
 });

@@ -1,6 +1,6 @@
 import { Canvas, useThree } from '@react-three/fiber';
 import { Physics } from '@react-three/rapier';
-import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, type ReactElement, type ReactNode } from 'react';
+import { Suspense, useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import { MathUtils, PerspectiveCamera, type Vector3Tuple } from 'three';
 import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
@@ -10,25 +10,30 @@ import { pickSpawnPoint } from '../game/spawn';
 import type { DollKind, Vec3 } from '../game/types';
 import { Cabinet } from './Cabinet';
 import { Doll, type DollHandle } from './Doll';
+import { DollHandlesContext } from './dollHandles';
 
 export interface GameCanvasProps {
   instances: readonly DollInstance[];
   vanishingIds: ReadonlySet<string>;
   onVanished: (id: string) => void;
-  /** Physics 안에 그려진다 */
+  /** Physics 안에 그려지고, 그 안에서 useDollHandles 로 인형 손잡이를 꺼낼 수 있다 */
   children?: ReactNode;
 }
 
 /** 3D 화면: 고정 카메라, 조명, 물리 세계 안의 기계와 인형 */
 export function GameCanvas({ instances, vanishingIds, onVanished, children }: GameCanvasProps): ReactElement {
-  const dollHandles = useRef(new Map<string, DollHandle>());
-  const register = useCallback((id: string, handle: DollHandle | null): void => {
-    if (handle === null) {
-      dollHandles.current.delete(id);
-      return;
-    }
-    dollHandles.current.set(id, handle);
-  }, []);
+  // 캔버스가 살아 있는 동안 같은 Map 하나를 쓴다. 등록은 Map 안만 바꾸므로 다시 그리기를 일으키지 않는다.
+  const [dollHandles] = useState((): Map<string, DollHandle> => new Map());
+  const register = useCallback(
+    (id: string, handle: DollHandle | null): void => {
+      if (handle === null) {
+        dollHandles.delete(id);
+        return;
+      }
+      dollHandles.set(id, handle);
+    },
+    [dollHandles],
+  );
   // 인형은 처음 그릴 때만 이 자리를 읽으므로 목록이 줄어 다시 계산해도 이미 있는 인형은 움직이지 않는다
   const spawnPoints = useMemo(
     (): Vec3[] => instances.map((_, index): Vec3 => pickSpawnPoint(index, CABINET_LAYOUT, GAME_CONFIG, Math.random)),
@@ -51,23 +56,25 @@ export function GameCanvas({ instances, vanishingIds, onVanished, children }: Ga
       />
       <Suspense fallback={null}>
         <Physics gravity={GRAVITY} colliders={false}>
-          <Cabinet />
-          {instances.map((instance, index) => {
-            const kind = KIND_BY_ID.get(instance.kindId);
-            if (kind === undefined) return null;
-            return (
-              <Doll
-                key={instance.id}
-                instance={instance}
-                kind={kind}
-                spawnAt={spawnPoints[index]}
-                isVanishing={vanishingIds.has(instance.id)}
-                onVanished={onVanished}
-                register={register}
-              />
-            );
-          })}
-          {children}
+          <DollHandlesContext value={dollHandles}>
+            <Cabinet />
+            {instances.map((instance, index) => {
+              const kind = KIND_BY_ID.get(instance.kindId);
+              if (kind === undefined) return null;
+              return (
+                <Doll
+                  key={instance.id}
+                  instance={instance}
+                  kind={kind}
+                  spawnAt={spawnPoints[index]}
+                  isVanishing={vanishingIds.has(instance.id)}
+                  onVanished={onVanished}
+                  register={register}
+                />
+              );
+            })}
+            {children}
+          </DollHandlesContext>
         </Physics>
       </Suspense>
     </Canvas>

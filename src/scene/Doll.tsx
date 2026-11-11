@@ -6,7 +6,7 @@ import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
 import type { DollInstance } from '../game/collection';
 import { getCabinetLayout } from '../game/dollGeometry';
-import { needsRedrop, pickSpawnPoint } from '../game/spawn';
+import { needsRedrop, pickSpawnPoint, type FallState } from '../game/spawn';
 import type { DollCollider, DollKind, Vec3 } from '../game/types';
 import { DollModel } from './DollModel';
 
@@ -35,8 +35,7 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
   const modelRef = useRef<Group>(null);
   const vanishElapsed = useRef(0);
   const hasReportedVanish = useRef(false);
-  /** 놓이거나 다시 떨어진 뒤 아직 한 번도 멈추거나 집게에 들린 적이 없다 */
-  const isFirstFall = useRef(true);
+  const fall = useRef<FallState>({ sinceSpawn: 0, hasSettled: false });
   const [initialPosition] = useState((): Vector3Tuple => [spawnAt.x, spawnAt.y, spawnAt.z]);
 
   useEffect(() => {
@@ -47,11 +46,11 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
       getPosition: (): Vec3 => readPosition(body),
       setVelocityToward(target: Vec3, follow: number): void {
         // 집게에 들린 인형은 이미 게임 안에 있다. 배출구에 넣으면 다시 떨어뜨리지 않고 뽑은 것이 된다.
-        isFirstFall.current = false;
+        fall.current.hasSettled = true;
         pullToward(body, target, follow);
       },
       respawn(position: Vec3): void {
-        isFirstFall.current = true;
+        restartFall(fall.current);
         placeAt(body, position);
       },
     };
@@ -74,10 +73,12 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
       return;
     }
 
-    if (body.isSleeping()) isFirstFall.current = false;
-    if (!needsRedrop(body.translation(), isFirstFall.current, CABINET_LAYOUT, GAME_CONFIG)) return;
+    const fallState = fall.current;
+    fallState.sinceSpawn += delta;
+    if (body.isSleeping()) fallState.hasSettled = true;
+    if (!needsRedrop(body.translation(), fallState, CABINET_LAYOUT, GAME_CONFIG)) return;
 
-    isFirstFall.current = true;
+    restartFall(fallState);
     placeAt(body, pickSpawnPoint(RESPAWN_INDEX, CABINET_LAYOUT, GAME_CONFIG, Math.random));
   });
 
@@ -127,6 +128,12 @@ function ScaledCollider({ collider, scale }: ScaledColliderProps): ReactElement 
       restitution={restitution}
     />
   );
+}
+
+/** 다시 떨어뜨릴 때 처음 떨어지기를 새로 시작한다 */
+function restartFall(fallState: FallState): void {
+  fallState.sinceSpawn = 0;
+  fallState.hasSettled = false;
 }
 
 /** 속도와 회전을 없애고 그 자리로 옮긴다 */

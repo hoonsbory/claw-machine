@@ -56,6 +56,8 @@ export interface GameConfig {
     readonly chuteMargin: number;
     readonly baseHeight: number;
     readonly heightStep: number;
+    /** 놓이거나 다시 떨어진 뒤 이 시간(초)이 지나면 멈추지 않았어도 처음 떨어지기가 끝난 것으로 본다 */
+    readonly firstFallMaxTime: number;
   };
   /** 물리 엔진 */
   readonly physics: {
@@ -89,7 +91,7 @@ export const GAME_CONFIG = {
     pityAfterFails: 3, pityMinQuality: 0.25, holdFollow: 15, holdSpinDamping: 0.85,
   },
   dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.4, respawnBelowY: -5, outOfBoundsMargin: 1 },
-  spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9 },
+  spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
   physics: {
     gravityY: -20, maxFrameTime: 0.05,
     doll: { friction: 0.5, restitution: 0.15, linearDamping: 0.05, angularDamping: 0.35 },
