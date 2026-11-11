@@ -92,7 +92,7 @@ export const GAME_CONFIG = {
     slipMinTime: 0.5, slipMaxTime: 2.4, sagTime: 0.4, sagDepth: 0.35,
     pityAfterFails: 3, pityMinQuality: 0.25, holdFollow: 15, holdSpinDamping: 0.85,
   },
-  dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.2, respawnBelowY: -5, outOfBoundsMargin: 1 },
+  dolls: { perKind: 4, vanishTime: 0.3, chuteDetectMargin: 0.2, respawnBelowY: -5, outOfBoundsMargin: 1 },
   spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
   physics: {
     gravityY: -20, timeStep: 1 / 60,
