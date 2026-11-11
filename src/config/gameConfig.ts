@@ -63,6 +63,8 @@ export interface GameConfig {
   readonly physics: {
     readonly gravityY: number;
     readonly maxFrameTime: number;
+    /** 물리 한 단계의 시간(초). 집게 상태도 물리 단계마다 이 시간만큼 나아간다. */
+    readonly timeStep: number;
     /** 인형 충돌체의 마찰·튕김과 강체의 감속 */
     readonly doll: {
       readonly friction: number;
@@ -93,7 +95,7 @@ export const GAME_CONFIG = {
   dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.4, respawnBelowY: -5, outOfBoundsMargin: 1 },
   spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
   physics: {
-    gravityY: -20, maxFrameTime: 0.05,
+    gravityY: -20, maxFrameTime: 0.05, timeStep: 1 / 60,
     doll: { friction: 0.5, restitution: 0.15, linearDamping: 0.05, angularDamping: 0.35 },
     wall: { friction: 0.7, restitution: 0.05 },
   },

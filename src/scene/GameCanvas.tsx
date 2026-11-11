@@ -11,6 +11,7 @@ import type { DollKind, Vec3 } from '../game/types';
 import { Cabinet } from './Cabinet';
 import { Doll, type DollHandle } from './Doll';
 import { DollHandlesContext } from './dollHandles';
+import { PHYSICS_FRAME_PRIORITY } from './frameOrder';
 
 export interface GameCanvasProps {
   instances: readonly DollInstance[];
@@ -55,7 +56,13 @@ export function GameCanvas({ instances, vanishingIds, onVanished, children }: Ga
         shadow-camera-bottom={-SHADOW_CAMERA_HALF}
       />
       <Suspense fallback={null}>
-        <Physics gravity={GRAVITY} colliders={false}>
+        {/* 집게 상태는 물리 단계마다 같은 시간만큼 나아가므로(useClawLoop) 고정 간격으로 돌린다 */}
+        <Physics
+          gravity={GRAVITY}
+          colliders={false}
+          timeStep={GAME_CONFIG.physics.timeStep}
+          updatePriority={PHYSICS_FRAME_PRIORITY}
+        >
           <DollHandlesContext value={dollHandles}>
             <Cabinet />
             {instances.map((instance, index) => {

@@ -2,7 +2,7 @@ import { expect, it } from 'vitest';
 import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { getCabinetLayout } from './dollGeometry';
-import { isOutOfBounds, needsRedrop, pickSpawnPoint } from './spawn';
+import { isFirstFall, isOutOfBounds, needsRedrop, pickSpawnPoint } from './spawn';
 
 const layout = getCabinetLayout(DOLL_KINDS, GAME_CONFIG);
 
@@ -37,4 +37,11 @@ it('멈추지 않은 인형도 처음 떨어진 지 정한 시간이 지나면 �
   expect(cap).toBe(6);
   expect(needsRedrop(overChute, { sinceSpawn: cap - 0.1, hasSettled: false }, layout, GAME_CONFIG)).toBe(true);
   expect(needsRedrop(overChute, { sinceSpawn: cap, hasSettled: false }, layout, GAME_CONFIG)).toBe(false);
+});
+it('멈추거나 들린 적이 없고 정한 시간이 지나지 않은 동안만 처음 떨어지는 중이다', () => {
+  const cap = GAME_CONFIG.spawn.firstFallMaxTime;
+  expect(isFirstFall({ sinceSpawn: 0, hasSettled: false }, GAME_CONFIG)).toBe(true);
+  expect(isFirstFall({ sinceSpawn: cap - 0.1, hasSettled: false }, GAME_CONFIG)).toBe(true);
+  expect(isFirstFall({ sinceSpawn: cap, hasSettled: false }, GAME_CONFIG)).toBe(false);
+  expect(isFirstFall(settled, GAME_CONFIG)).toBe(false);
 });

@@ -6,7 +6,7 @@ import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
 import type { DollInstance } from '../game/collection';
 import { getCabinetLayout } from '../game/dollGeometry';
-import { needsRedrop, pickSpawnPoint, type FallState } from '../game/spawn';
+import { isFirstFall, needsRedrop, pickSpawnPoint, type FallState } from '../game/spawn';
 import type { DollCollider, DollKind, Vec3 } from '../game/types';
 import { DollModel } from './DollModel';
 
@@ -17,6 +17,8 @@ export interface DollHandle {
   setVelocityToward(target: Vec3, follow: number): void;
   /** 그 자리로 옮기고 멈춘 상태에서 다시 떨어지게 한다. 처음 떨어지는 것으로 다시 친다. */
   respawn(position: Vec3): void;
+  /** 처음 떨어지는 중인지. 이때 배출구에 들어간 인형은 뽑은 것이 아니라 다시 떨어뜨릴 인형이다. */
+  isFirstFalling(): boolean;
 }
 
 export interface DollProps {
@@ -53,6 +55,7 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
         restartFall(fall.current);
         placeAt(body, position);
       },
+      isFirstFalling: (): boolean => isFirstFall(fall.current, GAME_CONFIG),
     };
     register(instance.id, handle);
     return (): void => register(instance.id, null);

@@ -1,0 +1,85 @@
+import { useEffect, useMemo, useRef } from 'react';
+import { clampLength } from '../game/math';
+import type { Vec2 } from '../game/types';
+
+/** 조이스틱·키보드 입력을 모아 두는 곳. 값은 ref 에만 두므로 입력이 바뀌어도 다시 그리지 않는다. */
+export interface MoveInput {
+  /** 조이스틱과 방향키를 합친 기울기. 길이는 1을 넘지 않는다. */
+  readMove(): Vec2;
+  /** 쌓인 내리기 요청을 꺼내고 비운다 */
+  takeDropRequest(): boolean;
+  setStick(move: Vec2): void;
+  requestDrop(): void;
+}
+
+/** 방향키 하나가 더하는 기울기. 위는 화면 안쪽(-z), 아래는 앞쪽(+z)이다. */
+const KEY_DIRECTIONS: Readonly<Record<string, Vec2>> = {
+  ArrowLeft: { x: -1, z: 0 },
+  ArrowRight: { x: 1, z: 0 },
+  ArrowUp: { x: 0, z: -1 },
+  ArrowDown: { x: 0, z: 1 },
+};
+const DROP_KEY = 'Space';
+const MAX_TILT = 1;
+const CENTER: Vec2 = { x: 0, z: 0 };
+
+/** 조이스틱 값과 방향키를 받는다. 창 전체의 키 입력을 듣고, 스페이스로 화면이 스크롤되지 않게 막는다. */
+export function useMoveInput(): MoveInput {
+  const stick = useRef<Vec2>(CENTER);
+  const pressedKeys = useRef(new Set<string>());
+  const isDropRequested = useRef(false);
+
+  useEffect(() => {
+    const keys = pressedKeys.current;
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.code === DROP_KEY) {
+        event.preventDefault();
+        // 누르고 있어서 반복되는 입력으로는 다음 시도를 시작하지 않는다
+        if (!event.repeat) isDropRequested.current = true;
+        return;
+      }
+      if (Object.hasOwn(KEY_DIRECTIONS, event.code)) keys.add(event.code);
+    };
+    const handleKeyUp = (event: KeyboardEvent): void => {
+      keys.delete(event.code);
+    };
+    // 키를 누른 채 다른 창으로 가면 keyup 이 오지 않아 집게가 계속 움직인다
+    const releaseAllKeys = (): void => keys.clear();
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', releaseAllKeys);
+    return (): void => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', releaseAllKeys);
+    };
+  }, []);
+
+  return useMemo(
+    (): MoveInput => ({
+      readMove: (): Vec2 => clampLength(addKeyDirections(stick.current, pressedKeys.current), MAX_TILT),
+      takeDropRequest: (): boolean => {
+        const wasRequested = isDropRequested.current;
+        isDropRequested.current = false;
+        return wasRequested;
+      },
+      setStick: (move: Vec2): void => {
+        stick.current = move;
+      },
+      requestDrop: (): void => {
+        isDropRequested.current = true;
+      },
+    }),
+    [],
+  );
+}
+
+function addKeyDirections(stick: Vec2, pressedKeys: ReadonlySet<string>): Vec2 {
+  let { x, z } = stick;
+  for (const code of pressedKeys) {
+    x += KEY_DIRECTIONS[code].x;
+    z += KEY_DIRECTIONS[code].z;
+  }
+  return { x, z };
+}

@@ -40,17 +40,19 @@ export interface FallState {
   hasSettled: boolean;
 }
 
+/** 처음 떨어지는 중인지: 아직 멈추거나 집게에 들린 적이 없고 spawn.firstFallMaxTime 도 지나지 않은 동안이다 */
+export function isFirstFall(fall: FallState, config: GameConfig): boolean {
+  return !fall.hasSettled && fall.sinceSpawn < config.spawn.firstFallMaxTime;
+}
+
 /**
  * 인형을 위에서 다시 떨어뜨려야 하는지. 기계 밖으로 나갔거나, 처음 떨어지는 중에 높이와 상관없이 배출구 위로 넘어갔을 때다.
- * 처음 떨어지는 중이란 아직 멈추거나 집게에 들린 적이 없고 spawn.firstFallMaxTime 도 지나지 않은 동안이다.
  * 높은 곳에서 떨어진 인형이 쌓인 인형에 튕겨 배출구 칸막이를 넘으면 시작하자마자 뽑힌 것이 되기 때문이다.
- * 그 시간이 지난 뒤 굴러 들어간 인형은 뽑은 것으로 둔다.
+ * 처음 떨어지기가 끝난 뒤 굴러 들어간 인형은 뽑은 것으로 둔다.
  */
 export function needsRedrop(position: Vec3, fall: FallState, layout: CabinetLayout, config: GameConfig): boolean {
   if (isOutOfBounds(position, config)) return true;
-
-  const isFirstFall = !fall.hasSettled && fall.sinceSpawn < config.spawn.firstFallMaxTime;
-  if (!isFirstFall) return false;
+  if (!isFirstFall(fall, config)) return false;
 
   const isOverChuteX = position.x >= layout.chuteMinX && position.x <= layout.chuteMaxX;
   const isOverChuteZ = position.z >= layout.chuteMinZ && position.z <= layout.chuteMaxZ;
