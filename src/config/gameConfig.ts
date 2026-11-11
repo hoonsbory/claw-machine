@@ -45,6 +45,7 @@ export interface GameConfig {
   readonly dolls: {
     readonly perKind: number;
     readonly vanishTime: number;
+    /** 배출구 안 인형의 원점이 똑바로 선 높이 + 이 여유보다 낮으면 바닥에 들어간 것으로 본다. 칸막이 위에 걸친 인형은 치지 않을 만큼 작게 둔다. */
     readonly chuteDetectMargin: number;
     readonly respawnBelowY: number;
     /** 바닥 가장자리에서 이만큼 더 나가면 기계 밖으로 본다 */
@@ -91,7 +92,7 @@ export const GAME_CONFIG = {
     slipMinTime: 0.5, slipMaxTime: 2.4, sagTime: 0.4, sagDepth: 0.35,
     pityAfterFails: 3, pityMinQuality: 0.25, holdFollow: 15, holdSpinDamping: 0.85,
   },
-  dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.4, respawnBelowY: -5, outOfBoundsMargin: 1 },
+  dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.2, respawnBelowY: -5, outOfBoundsMargin: 1 },
   spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
   physics: {
     gravityY: -20, timeStep: 1 / 60,

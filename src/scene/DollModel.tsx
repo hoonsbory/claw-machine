@@ -10,7 +10,8 @@ import {
   type Object3D,
   type Vector3Tuple,
 } from 'three';
-import { DOLL_KINDS, PLACEHOLDER_CORE_RADIUS, PLACEHOLDER_HEAD_RADIUS, PLACEHOLDER_HEAD_Y } from '../config/dollCatalog';
+import { DOLL_KINDS } from '../config/dollCatalog';
+import { getModelBaseY } from '../game/dollGeometry';
 import type { DollKind, PlaceholderLook } from '../game/types';
 
 export interface DollModelProps {
@@ -23,11 +24,12 @@ export interface DollModelProps {
  * placeholder.look 에 따른 임시 도형을 그린다. 모델을 읽지 못해도 그 인형 하나만 임시 도형이 되고 게임은 계속된다.
  *
  * 크기 단위 규칙(docs/dolls.md 에 같은 내용을 풀어 두었다)
- * - scale 을 곱하기 전 단위를 "표준 크기"라 한다. 임시 인형은 이 단위로 높이 약 1.5(몸통 아래 끝 -0.5 ~ 머리 끝 약 1.0)다.
+ * - scale 을 곱하기 전 단위를 "표준 크기"라 한다. 임시 도형은 이 단위로 높이 약 1.5(몸통 아래 끝 -0.5 ~ 머리 끝 약 1.0)다.
  * - .glb 모델은 파일 안의 원래 크기·원점과 상관없이 바운딩 박스를 재서 높이를 STANDARD_MODEL_HEIGHT 로 맞추고,
- *   바닥 가운데를 몸통 공(원점, 반지름 coreRadius)의 아래 끝에 둔다. 파일은 위가 +Y 이기만 하면 된다.
+ *   바닥 가운데를 모델 바닥 높이(getModelBaseY: kind.modelBaseY, 없으면 몸통 공 아래 끝 -coreRadius)에 둔다.
+ *   파일은 위가 +Y 이기만 하면 된다. 임시 도형도 같은 바닥 높이에 선다.
  * - coreRadius 와 충돌 도형 치수도 표준 크기 단위로 적는다. 그 위에 scale 을 모양과 충돌 도형에 함께 곱해 실물 크기 비율을 낸다.
- *   축하 화면(DollStage)도 이 표준 크기를 기준으로 인형을 화면 가운데에 맞춘다.
+ *   축하 화면(DollStage)도 이 표준 크기와 모델 바닥 높이로 인형을 화면 가운데에 맞춘다.
  */
 export function DollModel({ kind }: DollModelProps): ReactElement {
   return (
@@ -38,13 +40,19 @@ export function DollModel({ kind }: DollModelProps): ReactElement {
 }
 
 function DollShape({ kind }: DollModelProps): ReactElement {
-  const placeholder = <PlaceholderShape look={kind.placeholder.look} color={kind.placeholder.color} />;
+  const baseY = getModelBaseY(kind);
+  // 임시 도형은 몸통 공 아래 끝(-PLACEHOLDER_CORE_RADIUS)이 바닥이라, 그만큼 올려 모델과 같은 바닥 높이에 세운다
+  const placeholder = (
+    <group position-y={baseY + PLACEHOLDER_CORE_RADIUS}>
+      <PlaceholderShape look={kind.placeholder.look} color={kind.placeholder.color} />
+    </group>
+  );
   if (kind.modelUrl === null) return placeholder;
 
   return (
     <ModelBoundary fallback={placeholder}>
       <Suspense fallback={placeholder}>
-        <GltfShape url={resolveModelUrl(kind.modelUrl)} coreRadius={kind.coreRadius} />
+        <GltfShape url={resolveModelUrl(kind.modelUrl)} baseY={baseY} />
       </Suspense>
     </ModelBoundary>
   );
@@ -67,12 +75,13 @@ for (const kind of DOLL_KINDS) {
   if (kind.modelUrl !== null) useGLTF.preload(resolveModelUrl(kind.modelUrl));
 }
 
-/** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 인형 곰의 높이(약 1.55)와 같은 크기다. */
-const STANDARD_MODEL_HEIGHT = 1.5;
+/** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 도형 곰의 높이(약 1.55)와 거의 같은 크기다. */
+export const STANDARD_MODEL_HEIGHT = 1.5;
 
 interface GltfShapeProps {
   url: string;
-  coreRadius: number;
+  /** 모델 바닥을 놓을 높이(표준 크기 단위) */
+  baseY: number;
 }
 
 /**
@@ -80,9 +89,9 @@ interface GltfShapeProps {
  * 복제본은 도형·재질을 원본과 나눠 쓴다. dispose={null} 로, 이 인형이 빠질 때(뽑혀 사라질 때, 축하 화면을 닫을 때)
  * 다른 인형과 다른 캔버스가 아직 쓰는 도형·재질을 지우지 않게 한다.
  */
-function GltfShape({ url, coreRadius }: GltfShapeProps): ReactElement {
+function GltfShape({ url, baseY }: GltfShapeProps): ReactElement {
   const { scene } = useGLTF(url);
-  const fit = useMemo((): ModelFit => fitToStandardSize(scene, coreRadius), [scene, coreRadius]);
+  const fit = useMemo((): ModelFit => fitToStandardSize(scene, baseY), [scene, baseY]);
 
   return (
     <group dispose={null} position={fit.position} scale={fit.scale}>
@@ -97,16 +106,16 @@ interface ModelFit {
   position: Vector3Tuple;
 }
 
-/** 바운딩 박스로 높이를 STANDARD_MODEL_HEIGHT 에 맞추고, 바닥 가운데가 몸통 공 아래 끝(y = -coreRadius)에 오게 옮긴다 */
-function fitToStandardSize(scene: Object3D, coreRadius: number): ModelFit {
+/** 바운딩 박스로 높이를 STANDARD_MODEL_HEIGHT 에 맞추고, 바닥 가운데가 모델 바닥 높이(y = baseY)에 오게 옮긴다 */
+function fitToStandardSize(scene: Object3D, baseY: number): ModelFit {
   const box = new Box3().setFromObject(scene);
   const height = box.max.y - box.min.y;
   // 그릴 도형이 없거나 납작한 파일은 크기를 잴 수 없어 원래 크기 그대로 바닥만 맞춘다
-  if (box.isEmpty() || height <= 0) return { scale: 1, position: [0, -coreRadius, 0] };
+  if (box.isEmpty() || height <= 0) return { scale: 1, position: [0, baseY, 0] };
 
   const scale = STANDARD_MODEL_HEIGHT / height;
   const center = box.getCenter(new Vector3());
-  return { scale, position: [-center.x * scale, -coreRadius - box.min.y * scale, -center.z * scale] };
+  return { scale, position: [-center.x * scale, baseY - box.min.y * scale, -center.z * scale] };
 }
 
 interface ModelBoundaryProps {
@@ -136,6 +145,11 @@ interface PlaceholderShapeProps {
   look: PlaceholderLook;
   color: string;
 }
+
+/** 임시 도형 치수(표준 크기 단위): 원점의 몸통 공 반지름, 머리 공 반지름, 머리 공 가운데 높이 */
+const PLACEHOLDER_CORE_RADIUS = 0.5;
+const PLACEHOLDER_HEAD_RADIUS = 0.36;
+const PLACEHOLDER_HEAD_Y = 0.62;
 
 /** 코드로 만든 임시 인형: 몸통 공, 머리 공, 얼굴, 종류마다 다른 귀 */
 function PlaceholderShape({ look, color }: PlaceholderShapeProps): ReactElement {

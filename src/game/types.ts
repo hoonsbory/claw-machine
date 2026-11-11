@@ -36,6 +36,11 @@ export interface DollKind {
   scale: number;
   /** 집게가 감싸는 몸통 반지름(scale 적용 전) */
   coreRadius: number;
+  /**
+   * 모델 바닥(발끝) 높이. 원점(몸통 공 가운데)을 0 으로 본 scale 적용 전 값이다.
+   * 적지 않으면 -coreRadius 로, 모델이 몸통 공 아래 끝에 선다. 머리가 큰 인형은 몸통 공을 머리에 두고 이 값을 더 낮게 적는다.
+   */
+  modelBaseY?: number;
   /** scale 적용 전 치수 */
   colliders: readonly DollCollider[];
   /** 이 종류만 난이도를 덮어쓸 때 */
@@ -49,6 +54,8 @@ export interface DollMetrics {
   stopOffset: number;
   blockRadius: number;
   reachRadius: number;
+  /** 바닥에 똑바로 선 인형의 원점 높이. 배출구 바닥에 내려앉았는지 볼 때 쓴다. */
+  restHeight: number;
 }
 
 /** 배출구 범위와 집게가 돌아갈 자리 */

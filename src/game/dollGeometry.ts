@@ -14,7 +14,15 @@ export function getGrabTuning(kind: DollKind, config: GameConfig): GrabTuning {
   };
 }
 
-/** 집게가 멈추는 높이·매다는 위치·막히는 범위·닿는 범위를 종류별 몸통 크기에서 계산한다 */
+/** 모델 바닥 높이(scale 적용 전). 적지 않았으면 몸통 공 아래 끝이다. */
+export function getModelBaseY(kind: DollKind): number {
+  return kind.modelBaseY ?? -kind.coreRadius;
+}
+
+/**
+ * 집게가 멈추는 높이·매다는 위치·막히는 범위·닿는 범위를 종류별 몸통 크기에서 계산한다.
+ * 똑바로 선 높이는 모델 바닥과 몸통 공 아래 끝 중 더 낮은 쪽으로 선다고 보고 계산한다.
+ */
 export function getDollMetrics(kind: DollKind, config: GameConfig): DollMetrics {
   const coreRadius = getScaledCoreRadius(kind);
   const holdOffset = coreRadius + config.claw.holdGap;
@@ -25,6 +33,7 @@ export function getDollMetrics(kind: DollKind, config: GameConfig): DollMetrics 
     stopOffset: holdOffset + config.claw.stopGap,
     blockRadius: coreRadius + config.claw.blockMargin,
     reachRadius: coreRadius + getGrabTuning(kind, config).reachMargin,
+    restHeight: Math.max(coreRadius, -getModelBaseY(kind) * kind.scale),
   };
 }
 
@@ -49,11 +58,11 @@ export function getCabinetLayout(kinds: readonly DollKind[], config: GameConfig)
   };
 }
 
-/** 배출구 범위 안에서 바닥 가까이 내려앉은 인형만 들어간 것으로 본다 */
+/** 배출구 범위 안에서 바닥 가까이(똑바로 선 높이 + 여유보다 낮게) 내려앉은 인형만 들어간 것으로 본다 */
 export function isInsideChute(position: Vec3, metrics: DollMetrics, layout: CabinetLayout, config: GameConfig): boolean {
   const isWithinX = position.x >= layout.chuteMinX && position.x <= layout.chuteMaxX;
   const isWithinZ = position.z >= layout.chuteMinZ && position.z <= layout.chuteMaxZ;
-  const isNearFloor = position.y < metrics.coreRadius + config.dolls.chuteDetectMargin;
+  const isNearFloor = position.y < metrics.restHeight + config.dolls.chuteDetectMargin;
 
   return isWithinX && isWithinZ && isNearFloor;
 }

@@ -1,8 +1,9 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { useRef, type ReactElement } from 'react';
 import type { Group, Vector3Tuple } from 'three';
+import { getModelBaseY } from '../game/dollGeometry';
 import type { DollKind } from '../game/types';
-import { DollModel } from '../scene/DollModel';
+import { DollModel, STANDARD_MODEL_HEIGHT } from '../scene/DollModel';
 
 export interface DollStageProps {
   kind: DollKind;
@@ -42,11 +43,19 @@ function FloatingDoll({ kind, isReducedMotion }: DollStageProps): ReactElement {
 
   return (
     <group ref={groupRef} rotation={[0, REST_TURN, 0]}>
-      <group scale={1 / kind.scale} position={[0, -DOLL_CENTER_Y, 0]}>
+      <group scale={1 / kind.scale} position={[0, -getDollCenterY(kind), 0]}>
         <DollModel kind={kind} />
       </group>
     </group>
   );
+}
+
+/**
+ * 표준 크기(scale 1)로 그린 인형의 위아래 가운데 높이. 모델은 모델 바닥 높이에서 STANDARD_MODEL_HEIGHT 만큼 서므로
+ * 그 중간이다. 이만큼 내려 화면 가운데에 둔다. 임시 도형(높이 약 1.55)도 같은 바닥에 서서 거의 같은 자리가 된다.
+ */
+function getDollCenterY(kind: DollKind): number {
+  return getModelBaseY(kind) + STANDARD_MODEL_HEIGHT / 2;
 }
 
 /** 넘치듯 커졌다가 제자리에 닿는 곡선(0→1) */
@@ -62,8 +71,6 @@ const GROUND_COLOR = '#ffc4dc';
 const SKY_INTENSITY = 1.6;
 const SUN_POSITION: Vector3Tuple = [2, 4, 5];
 const SUN_INTENSITY = 1.6;
-/** 임시 도형(scale 1)의 몸통 아래 끝(-0.5)과 귀 끝(약 1.05) 사이 가운데. 이만큼 내려 화면 가운데에 둔다. */
-const DOLL_CENTER_Y = 0.27;
 /** 정면에서 살짝 돌려 둔 각도(라디안). 움직임을 줄여도 입체로 보인다. */
 const REST_TURN = -0.35;
 const RISE_TIME = 0.7;
