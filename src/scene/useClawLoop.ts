@@ -23,6 +23,7 @@ export interface ClawView {
   shownZ: number;
   hubY: number;
   closeAmount: number;
+  /** 손가락을 인형을 쥔 모양(덜 오므린 모양)으로 그릴지. 놓는 동안에는 놓기 시작할 때의 값을 지킨다. */
   isHolding: boolean;
   phase: ClawPhase;
 }
@@ -58,6 +59,7 @@ export function useClawLoop({
   const tuning = useRef<LoopTuning>(DEFAULT_TUNING);
   const sway = useRef<Sway>(INITIAL_SWAY);
   const poses = useRef<PoseHistory>(INITIAL_POSES);
+  const holdingPose = useRef(false);
   // 이 루프가 획득으로 지운 인형. 사라지는 연출 동안 손잡이가 남아 있어도 다시 집거나 획득하지 않는다.
   // session.vanishingIds 는 다시 그려진 뒤에야 바뀌므로 바로 다음 물리 단계부터 빼려면 여기 따로 둔다.
   const removedIds = useRef(new Set<string>());
@@ -100,6 +102,7 @@ export function useClawLoop({
     }
 
     claw.current = next;
+    holdingPose.current = getHoldingPose(holdingPose.current, next);
     sway.current = nextSway;
     poses.current = { previous: poses.current.current, current: poseOf(next, nextSway) };
     if (next.failStreak !== before.failStreak) onFailStreakChange(next.failStreak);
@@ -108,7 +111,7 @@ export function useClawLoop({
   // 이번 프레임의 물리 단계가 끝난 뒤, 집게 모양을 그리기 전에 돈다(frameOrder.ts)
   useFrame((_, delta): void => {
     sinceLastStep.current = advanceSinceLastStep(sinceLastStep.current, delta);
-    view.current = blendView(poses.current, sinceLastStep.current / TIME_STEP, claw.current);
+    view.current = blendView(poses.current, sinceLastStep.current / TIME_STEP, claw.current, holdingPose.current);
   }, CLAW_VIEW_FRAME_PRIORITY);
 
   // 개발 서버에서만 브라우저 점검용으로 읽기 창구를 연다. 배포 빌드에는 들어가지 않는다.
@@ -171,7 +174,7 @@ const INITIAL_STATE = createClawState(LAYOUT, GAME_CONFIG);
 const INITIAL_SWAY: Sway = { shownX: INITIAL_STATE.x, shownZ: INITIAL_STATE.z, velocityX: 0, velocityZ: 0 };
 const INITIAL_POSE = poseOf(INITIAL_STATE, INITIAL_SWAY);
 const INITIAL_POSES: PoseHistory = { previous: INITIAL_POSE, current: INITIAL_POSE };
-const INITIAL_VIEW = blendView(INITIAL_POSES, 1, INITIAL_STATE);
+const INITIAL_VIEW = blendView(INITIAL_POSES, 1, INITIAL_STATE, false);
 
 /**
  * 조정 값을 얹은 설정과 그 설정으로 다시 만든 인형 표. 닿는 여유는 인형 표 안의 종류별 닿는 범위에 들어가므로 표도 새로 만든다.
@@ -225,6 +228,15 @@ function judgeSnapshot(snapshot: DollSnapshot, state: ClawState, handle: DollHan
   });
 }
 
+/**
+ * 손가락을 인형을 쥔 모양으로 그릴지. 놓는 동안(release)에는 놓기 시작할 때의 모양을 그대로 지킨다.
+ * 놓는 순간 쥔 인형이 없어졌다고 바로 다 오므린 모양으로 바꾸면, 손가락이 잠깐 더 꽉 쥐었다가 벌어져 보인다.
+ */
+function getHoldingPose(previous: boolean, state: ClawState): boolean {
+  if (state.phase === 'release') return previous;
+  return state.held !== null || state.pendingGrab !== null;
+}
+
 function poseOf(state: ClawState, sway: Sway): ClawPose {
   return { x: state.x, z: state.z, shownX: sway.shownX, shownZ: sway.shownZ, hubY: state.hubY, closeAmount: state.closeAmount };
 }
@@ -239,7 +251,7 @@ function advanceSinceLastStep(sinceLastStep: number, delta: number): number {
   return next;
 }
 
-function blendView({ previous, current }: PoseHistory, ratio: number, state: ClawState): ClawView {
+function blendView({ previous, current }: PoseHistory, ratio: number, state: ClawState, isHolding: boolean): ClawView {
   const blend = (key: keyof ClawPose): number => previous[key] + (current[key] - previous[key]) * ratio;
   return {
     x: blend('x'),
@@ -248,7 +260,7 @@ function blendView({ previous, current }: PoseHistory, ratio: number, state: Cla
     shownZ: blend('shownZ'),
     hubY: blend('hubY'),
     closeAmount: blend('closeAmount'),
-    isHolding: state.held !== null || state.pendingGrab !== null,
+    isHolding,
     phase: state.phase,
   };
 }
