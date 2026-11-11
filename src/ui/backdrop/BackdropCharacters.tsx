@@ -60,6 +60,8 @@ const CHARACTERS: readonly CharacterSpot[] = [
  * 바탕(SkyBackdrop)이 크기 질의 컨테이너라 cqw·cqh 가 틀 폭·높이의 1% 다.
  */
 const CABINET_HALF_WIDTH = 'min(38.5cqw, 17.8cqh)';
+/** cqw·cqh 를 모르는 브라우저(iOS 15 이하)가 대신 쓰는 값. 폰처럼 좁은 화면의 비율만 맞춘다. */
+const CABINET_HALF_WIDTH_FALLBACK = '38.5%';
 /** 그림마다 둥실거림을 이만큼(초) 엇갈리게 시작한다 */
 const BOB_STAGGER = -0.7;
 
@@ -67,7 +69,11 @@ function getHorizontalStyle(side: CharacterSpot['side'], x: HorizontalPlace): st
   if (x.from === 'frameEdge') return `${side}: ${x.gap}px;`;
   // 왼쪽 그림은 오른쪽 가장자리를, 오른쪽 그림은 왼쪽 가장자리를 기계 옆면에서 tuck 만큼 안쪽에 둔다
   const innerEdge = side === 'left' ? 'right' : 'left';
-  return `${innerEdge}: calc(50cqw + ${CABINET_HALF_WIDTH} - ${x.tuck}px);`;
+  // 모르는 단위가 든 선언은 통째로 버려지므로, 앞줄의 % 값이 그 브라우저의 자리로 남는다
+  return `
+    ${innerEdge}: calc(50% + ${CABINET_HALF_WIDTH_FALLBACK} - ${x.tuck}px);
+    ${innerEdge}: calc(50cqw + ${CABINET_HALF_WIDTH} - ${x.tuck}px);
+  `;
 }
 
 interface CharacterLook {
