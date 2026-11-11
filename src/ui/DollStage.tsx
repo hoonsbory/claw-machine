@@ -4,6 +4,7 @@ import type { Group, Vector3Tuple } from 'three';
 import { getModelBaseY } from '../game/dollGeometry';
 import type { DollKind } from '../game/types';
 import { DollModel, STANDARD_MODEL_HEIGHT } from '../scene/DollModel';
+import { DESIGN_TOKENS } from '../theme/tokens';
 
 export interface DollStageProps {
   kind: DollKind;
@@ -66,11 +67,12 @@ function easeOutBack(progress: number): number {
 
 const MAX_PIXEL_RATIO = 2;
 const STAGE_CAMERA = { position: [0, 0, 4.2] as Vector3Tuple, fov: 35 };
-const SKY_COLOR = '#ffffff';
-const GROUND_COLOR = '#ffc4dc';
-const SKY_INTENSITY = 1.6;
+/** 게임 화면(GameCanvas)과 같은 거의 흰 따뜻한 빛이라 기계 안에서 본 인형과 같은 색으로 보인다 */
+const SKY_COLOR = DESIGN_TOKENS.color.lightSky;
+const GROUND_COLOR = DESIGN_TOKENS.color.lightGround;
+const SKY_INTENSITY = 2.4;
 const SUN_POSITION: Vector3Tuple = [2, 4, 5];
-const SUN_INTENSITY = 1.6;
+const SUN_INTENSITY = 1.3;
 /** 정면에서 살짝 돌려 둔 각도(라디안). 움직임을 줄여도 입체로 보인다. */
 const REST_TURN = -0.35;
 const RISE_TIME = 0.7;

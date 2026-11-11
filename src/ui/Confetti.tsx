@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import { useEffect, useRef, type ReactElement } from 'react';
+import { DESIGN_TOKENS } from '../theme/tokens';
 
 /** 터지는 크기: 보통 획득, 5종을 다 채운 큰 축하 */
 export type ConfettiBurstName = 'normal' | 'grand';
@@ -131,9 +132,11 @@ function stepPieces(pieces: Piece[], elapsed: number, delta: number, size: Canva
   }
 }
 
-/** 조각은 납작한 사각형이고, 뒤집히듯 세로 길이가 출렁인다 */
+/** 조각은 납작한 사각형이고, 뒤집히듯 세로 길이가 출렁인다. 옅은 바탕에서도 보이도록 가는 갈색 테두리를 두른다. */
 function drawPieces(context: CanvasRenderingContext2D, pieces: readonly Piece[], elapsed: number, alpha: number): void {
   context.globalAlpha = alpha;
+  context.strokeStyle = DESIGN_TOKENS.color.lineSoft;
+  context.lineWidth = PIECE_LINE_WIDTH;
   for (const piece of pieces) {
     if (elapsed < piece.launchAt) continue;
     const flip = Math.abs(Math.cos(piece.flutter + elapsed * FLUTTER_SPEED));
@@ -142,6 +145,7 @@ function drawPieces(context: CanvasRenderingContext2D, pieces: readonly Piece[],
     context.rotate(piece.angle);
     context.fillStyle = piece.color;
     context.fillRect(-piece.width / 2, (-piece.height * flip) / 2, piece.width, piece.height * flip);
+    context.strokeRect(-piece.width / 2, (-piece.height * flip) / 2, piece.width, piece.height * flip);
     context.restore();
   }
 }
@@ -187,7 +191,17 @@ const MAX_SPIN = 9;
 const FLUTTER_SPEED = 7;
 const FADE_TIME = 0.6;
 const STILL_SPREAD_TIME = 0.35;
-const CONFETTI_COLORS = ['#ff5c9a', '#ffd166', '#8fd694', '#9ecbff', '#d4c2ff', '#ff8a5c', '#ffffff'] as const;
+const PIECE_LINE_WIDTH = 1;
+/** 파스텔 색종이. 크림·복숭아빛 바탕에서도 보이도록 팔레트에서 한 톤 진한 색을 섞는다. */
+const CONFETTI_COLORS = [
+  DESIGN_TOKENS.color.coral,
+  DESIGN_TOKENS.color.butterDeep,
+  DESIGN_TOKENS.color.mintDeep,
+  DESIGN_TOKENS.color.skyDeep,
+  DESIGN_TOKENS.color.lavender,
+  DESIGN_TOKENS.color.peachDeep,
+  DESIGN_TOKENS.color.butter,
+] as const;
 
 const confettiCanvas = css`
   position: absolute;

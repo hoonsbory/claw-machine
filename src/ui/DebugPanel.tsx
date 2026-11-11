@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useId, useState, type KeyboardEvent, type ReactElement } from 'react';
 import { GAME_CONFIG } from '../config/gameConfig';
 import { applyTuning, type TuningOverrides } from '../config/runtimeTuning';
+import { DESIGN_TOKENS } from '../theme/tokens';
 
 export interface DebugPanelProps {
   overrides: TuningOverrides;
@@ -112,13 +113,14 @@ const BODY_RADIUS = 12;
 const ROW_GAP = 10;
 const FONT_SIZE = 13;
 const NOTE_FONT_SIZE = 11;
-const FONT_WEIGHT = 700;
-const BACKGROUND = 'rgba(255, 255, 255, 0.92)';
-const TEXT_COLOR = '#7a2f55';
-const ACCENT_COLOR = '#c21f5c';
-const NOTE_COLOR = '#9a6680';
-const SHADOW = '0 2px 6px rgba(160, 40, 100, 0.2)';
-const FONT_FAMILY = `-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif`;
+const FONT_WEIGHT = DESIGN_TOKENS.font.weight;
+const BACKGROUND = DESIGN_TOKENS.color.panel;
+const TEXT_COLOR = DESIGN_TOKENS.color.line;
+/** 슬라이더 막대 색. 글자는 읽기 쉽게 모두 갈색이다. */
+const ACCENT_COLOR = DESIGN_TOKENS.color.coralDeep;
+const NOTE_COLOR = DESIGN_TOKENS.color.lineSoft;
+const SHADOW = DESIGN_TOKENS.shadow.sticker;
+const FONT_FAMILY = DESIGN_TOKENS.font.family;
 
 const panel = css`
   position: absolute;
@@ -127,6 +129,7 @@ const panel = css`
   color: ${TEXT_COLOR};
   font-family: ${FONT_FAMILY};
   font-size: ${FONT_SIZE}px;
+  font-synthesis: none;
   touch-action: none;
 `;
 
@@ -137,7 +140,7 @@ const toggle = css`
   border-radius: ${TOGGLE_HEIGHT / 2}px;
   background: ${BACKGROUND};
   box-shadow: ${SHADOW};
-  color: ${ACCENT_COLOR};
+  color: ${TEXT_COLOR};
   font: inherit;
   font-weight: ${FONT_WEIGHT};
   -webkit-tap-highlight-color: transparent;
@@ -167,7 +170,7 @@ const rowHead = css`
 `;
 
 const valueText = css`
-  color: ${ACCENT_COLOR};
+  color: ${TEXT_COLOR};
   font-weight: ${FONT_WEIGHT};
   font-variant-numeric: tabular-nums;
 `;
@@ -182,7 +185,7 @@ const streak = css`
   margin: 0;
 
   strong {
-    color: ${ACCENT_COLOR};
+    color: ${TEXT_COLOR};
   }
 `;
 

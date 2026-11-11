@@ -1,6 +1,7 @@
 import { css, keyframes } from '@emotion/css';
 import { Component, useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
 import type { DollKind } from '../game/types';
+import { DESIGN_TOKENS } from '../theme/tokens';
 import { Confetti } from './Confetti';
 import { DollStage } from './DollStage';
 
@@ -77,7 +78,10 @@ class StageBoundary extends Component<StageBoundaryProps, StageBoundaryState> {
 
 type CaptionProps = Omit<CelebrationProps, 'onClose'>;
 
-/** 글자는 인형 이름과 `뽑았다!` 뿐이다. 5종을 다 채웠으면 이름 아래에 `전부 뽑았다!` 를 더 크게 쓴다. */
+/**
+ * 글자는 인형 이름과 `뽑았다!` 뿐이다. 5종을 다 채웠으면 이름 아래에 `전부 뽑았다!` 를 더 크게 쓴다.
+ * 색종이 위에서도 읽히도록 갈색 테두리의 크림색 판 위에 갈색 글자로 쓴다.
+ */
 function Caption({ kind, isComplete }: CaptionProps): ReactElement {
   return (
     <span className={caption}>
@@ -111,16 +115,19 @@ const STAGE_WIDTH_RATIO = 86;
 const NAME_FONT_SIZE = 40;
 const WIN_FONT_SIZE = 28;
 const COMPLETE_FONT_SIZE = 34;
-const FONT_WEIGHT = 900;
-const CAPTION_GAP = 4;
+const CAPTION_GAP = 2;
+const PLATE_PADDING_Y = 10;
+const PLATE_PADDING_X = 26;
+/** 글자판 안쪽에 바느질한 듯 그은 점선과 판 테두리 사이(px) */
+const PLATE_STITCH_INSET = 5;
 const FADE_IN_TIME = 0.25;
 const POP_TIME = 0.5;
 const POP_DELAY = 0.2;
-const NAME_COLOR = '#ff3d7f';
-const MESSAGE_COLOR = '#c21f5c';
-const TEXT_OUTLINE = '0 2px 0 #ffffff, 0 0 12px rgba(255, 255, 255, 0.9)';
-const BACKDROP = 'radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.94), rgba(255, 205, 226, 0.9) 70%)';
-const FONT_FAMILY = `-apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif`;
+
+const { color, font, line, radius, shadow } = DESIGN_TOKENS;
+
+/** 크림색에서 복숭아색으로 번지는 은은한 빛 */
+const BACKDROP = `radial-gradient(circle at 50% 42%, ${color.glowCenter}, ${color.glowEdge} 70%)`;
 
 const fadeIn = keyframes`
   from { opacity: 0; }
@@ -146,7 +153,8 @@ const overlay = css`
   padding: 0;
   border: 0;
   background: ${BACKDROP};
-  font-family: ${FONT_FAMILY};
+  font-family: ${font.family};
+  font-synthesis: none;
   cursor: pointer;
   outline: none;
   touch-action: none;
@@ -170,9 +178,23 @@ const caption = css`
   flex-direction: column;
   align-items: center;
   gap: ${CAPTION_GAP}px;
-  font-weight: ${FONT_WEIGHT};
+  padding: ${PLATE_PADDING_Y}px ${PLATE_PADDING_X}px;
+  border: ${line.thickWidth}px solid ${color.line};
+  border-radius: ${radius.panel}px;
+  background: ${color.cream};
+  box-shadow: ${shadow.plate};
+  color: ${color.line};
+  font-weight: ${font.weight};
   line-height: 1.15;
-  text-shadow: ${TEXT_OUTLINE};
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: ${PLATE_STITCH_INSET}px;
+    border: ${line.width}px dashed ${color.peachDeep};
+    border-radius: ${radius.panel - PLATE_STITCH_INSET}px;
+    pointer-events: none;
+  }
 
   @media (prefers-reduced-motion: no-preference) {
     animation: ${pop} ${POP_TIME}s ${POP_DELAY}s ease-out both;
@@ -180,16 +202,13 @@ const caption = css`
 `;
 
 const dollName = css`
-  color: ${NAME_COLOR};
   font-size: ${NAME_FONT_SIZE}px;
 `;
 
 const winText = css`
-  color: ${MESSAGE_COLOR};
   font-size: ${WIN_FONT_SIZE}px;
 `;
 
 const completeText = css`
-  color: ${MESSAGE_COLOR};
   font-size: ${COMPLETE_FONT_SIZE}px;
 `;
