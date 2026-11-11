@@ -44,10 +44,22 @@ function DollShape({ kind }: DollModelProps): ReactElement {
   return (
     <ModelBoundary fallback={placeholder}>
       <Suspense fallback={placeholder}>
-        <GltfShape url={kind.modelUrl} coreRadius={kind.coreRadius} />
+        <GltfShape url={resolveModelUrl(kind.modelUrl)} coreRadius={kind.coreRadius} />
       </Suspense>
     </ModelBoundary>
   );
+}
+
+/** 주소 맨 앞의 / */
+const LEADING_SLASH = /^\//;
+
+/**
+ * 카탈로그의 modelUrl(public/ 아래 상대 경로, 예: `dolls/rabbit.glb`)을 실제로 읽을 주소로 바꾼다. 모델 주소는 여기서만 만든다.
+ * 앱이 놓인 경로(import.meta.env.BASE_URL) 뒤에 붙여, 빌드 결과물을 하위 경로에 올려도 그 아래의 dolls/ 를 읽는다.
+ * 앞에 / 를 붙여 적었어도 같은 주소가 된다.
+ */
+function resolveModelUrl(modelUrl: string): string {
+  return `${import.meta.env.BASE_URL}${modelUrl.replace(LEADING_SLASH, '')}`;
 }
 
 /** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 인형 곰의 높이(약 1.55)와 같은 크기다. */

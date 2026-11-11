@@ -37,16 +37,16 @@
 
 ## 3. 넣는 순서
 
-1. 모델 파일 이름을 종류 id 로 정해 `public/dolls/<id>.glb` 에 넣는다. 예를 들어 `public/dolls/rabbit.glb` 다. id 는 영어 소문자로 짓고 종류마다 달라야 한다. 빌드하면 이 파일들이 `dist/dolls/` 로 그대로 복사된다.
+1. 모델 파일 이름을 종류 id 로 정해 `public/dolls/<id>.glb` 에 넣는다. 예를 들어 `public/dolls/rabbit.glb` 다. id 는 영어 소문자로 짓고 종류마다 달라야 한다. 빌드하면 이 파일들이 `dist/dolls/` 로 그대로 복사된다. `dist` 폴더는 정적 호스팅의 맨 위에 올려도, 하위 경로(예: `https://주소/secret-path/`)에 올려도 그대로 동작한다.
 2. `src/config/dollCatalog.ts` 의 `DOLL_KINDS` 에서 바꿀 종류 하나를 고친다.
    - `id`: 파일 이름과 같은 id. 뽑은 기록에 이 id 가 저장된다.
    - `displayName`: 축하 화면에 크게 나오는 이름.
-   - `modelUrl`: `'/dolls/<id>.glb'`.
+   - `modelUrl`: `'dolls/<id>.glb'`. 앞에 `/` 를 붙이지 않는 `public/` 기준 상대 경로다. 게임이 앱이 놓인 경로를 앞에 붙여 읽으므로 하위 경로에 올려도 모델을 찾는다.
    - `scale`: 실물 높이(cm) ÷ 17.
    - `placeholder`: 모델을 읽는 동안이나 읽지 못했을 때 대신 보일 임시 도형이다. 생김새(`look`)는 다섯 가지 중에서 고르고, 색은 실제 인형과 비슷하게 둔다.
    - `coreRadius`, `colliders`: 처음에는 임시 인형 값(`PLACEHOLDER_CORE_RADIUS`, `PLACEHOLDER_COLLIDERS`)을 그대로 두고 5번에서 맞춘다.
 3. 개발 서버를 켜고(`npm run dev`) 주소 끝에 `?debug` 를 붙여 연다. 예: `http://localhost:5173/?debug`
-4. 모델이 보이는지 확인한다. 임시 도형만 보이면 모델을 읽지 못한 것이다. 브라우저 콘솔에 `Could not load /dolls/<id>.glb` 오류가 있는지 보고, 파일 이름과 `modelUrl` 이 같은지 확인한다. 모델을 읽지 못해도 그 종류만 임시 도형이 되고 게임은 계속된다.
+4. 모델이 보이는지 확인한다. 임시 도형만 보이면 모델을 읽지 못한 것이다. 브라우저 콘솔에 `Could not load /dolls/<id>.glb` 오류(빌드 결과물에서는 `./dolls/<id>.glb`)가 있는지 보고, 파일 이름과 `modelUrl` 이 같은지 확인한다. 모델을 읽지 못해도 그 종류만 임시 도형이 되고 게임은 계속된다.
 5. 충돌 도형을 맞춘다(아래 4장).
 6. 조정 패널로 집게 힘을 맞추고, 정한 값을 `src/config/gameConfig.ts` 에 적는다(아래 5장).
 7. `?reset` 을 붙여 기록을 지우고 처음부터 한 판을 끝까지 돌려 본다(아래 6장).
@@ -62,7 +62,7 @@
 {
   id: 'rabbit',
   displayName: '토순이',
-  modelUrl: '/dolls/rabbit.glb',
+  modelUrl: 'dolls/rabbit.glb',
   placeholder: { look: 'bunny', color: '#f4d6e4' },
   scale: 1.2, // 20cm ÷ 17 ≈ 1.18
   coreRadius: 0.45,
@@ -107,7 +107,7 @@
 ## 7. 선물 전 확인 목록
 
 - [ ] 모든 종류가 임시 도형이 아니라 모델로 보인다.
-- [ ] 브라우저 콘솔에 오류가 없다. 특히 `Could not load /dolls/...` 가 없다.
+- [ ] 브라우저 콘솔에 오류가 없다. 특히 `dolls/` 모델 주소가 들어간 `Could not load ...` 가 없다.
 - [ ] `?debug` 로 열었을 때 충돌 도형 선이 모델과 대략 겹친다.
 - [ ] 정한 집게 힘, 닿는 여유, 보정까지 실패 횟수를 `src/config/gameConfig.ts` 에 적었다.
 - [ ] `npm run verify` 와 `npm run build` 가 통과한다.

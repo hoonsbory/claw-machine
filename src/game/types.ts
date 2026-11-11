@@ -28,7 +28,7 @@ export interface GrabTuning {
 export interface DollKind {
   id: string;
   displayName: string;
-  /** null이면 임시 도형을 쓴다 */
+  /** public/ 아래 .glb 의 상대 경로(예: `dolls/rabbit.glb`). null이면 임시 도형을 쓴다. */
   modelUrl: string | null;
   /** 모델이 없거나, 읽는 동안이거나, 읽지 못했을 때 보여 줄 임시 도형 */
   placeholder: { look: PlaceholderLook; color: string };
