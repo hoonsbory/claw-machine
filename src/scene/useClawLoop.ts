@@ -8,11 +8,12 @@ import { createClawState, forgetDolls, getHoldHeight, markWin, stepClaw, type Cl
 import { getCabinetLayout, isInsideChute } from '../game/dollGeometry';
 import { createDollLookup } from '../game/grabJudge';
 import { clamp } from '../game/math';
+import { judgeChuteArrival, pickRespawnPoint, type ChuteVerdict } from '../game/spawn';
 import type { ClawEvent, ClawPhase, ClawState, DollKind, DollSnapshot, Vec2 } from '../game/types';
 import type { MoveInput } from '../input/useMoveInput';
 import type { GameSession } from '../session/useGameSession';
 import type { DollHandle } from './Doll';
-import { CLAW_VIEW_FRAME_PRIORITY } from './frameOrder';
+import { CLAW_VIEW_FRAME_PRIORITY, PHYSICS_MAX_FRAME_DELTA } from './frameOrder';
 
 /** 화면에 그릴 집게. x·z 는 판정에 쓰는 실제 위치, shownX·shownZ 는 줄 흔들림이 더해진 보이는 위치다. */
 export interface ClawView {
@@ -60,6 +61,8 @@ export function useClawLoop({
   // 이 루프가 획득으로 지운 인형. 사라지는 연출 동안 손잡이가 남아 있어도 다시 집거나 획득하지 않는다.
   // session.vanishingIds 는 다시 그려진 뒤에야 바뀌므로 바로 다음 물리 단계부터 빼려면 여기 따로 둔다.
   const removedIds = useRef(new Set<string>());
+  // 이 페이지를 연 뒤 내리기를 한 번이라도 요청했는지. 그 전에 배출구에 굴러 들어간 인형은 뽑은 것으로 치지 않는다.
+  const hasDropped = useRef(false);
   const sinceLastStep = useRef(0);
   const view = useRef<ClawView>(INITIAL_VIEW);
 
@@ -71,11 +74,9 @@ export function useClawLoop({
     const { deps } = tuning.current;
 
     const snapshots = readDolls(dolls, removedIds.current, kindOf);
-    const { state, events } = stepClaw(
-      before,
-      { move: input.readMove(), dropRequested: input.takeDropRequest(), dolls: snapshots, dt: TIME_STEP },
-      deps,
-    );
+    const dropRequested = input.takeDropRequest();
+    if (dropRequested) hasDropped.current = true;
+    const { state, events } = stepClaw(before, { move: input.readMove(), dropRequested, dolls: snapshots, dt: TIME_STEP }, deps);
     for (const event of events) onEvent(event);
     if (state.phase !== before.phase) session.setPhase(state.phase);
 
@@ -84,7 +85,13 @@ export function useClawLoop({
 
     let next = state;
     for (const snapshot of snapshots) {
-      if (!isChuteArrival(snapshot, next, dolls, deps)) continue;
+      const handle = dolls.get(snapshot.id);
+      if (handle === undefined) continue;
+
+      const verdict = judgeSnapshot(snapshot, next, handle, hasDropped.current, deps);
+      if (verdict === 'redrop') handle.respawn(pickRespawnPoint(DOLL_KINDS.length, deps.layout, deps.config, Math.random));
+      if (verdict !== 'win') continue;
+
       const removed = session.reportChuteArrival(snapshot.id);
       if (removed === null) continue;
 
@@ -159,8 +166,6 @@ declare global {
 const LAYOUT = getCabinetLayout(DOLL_KINDS, GAME_CONFIG);
 const DEFAULT_TUNING = createLoopTuning({});
 const TIME_STEP = GAME_CONFIG.physics.timeStep;
-/** <Physics> 가 한 프레임 시간을 자르는 상한(라이브러리 안에 정해진 값). 물리 단계 사이 위치를 같은 방식으로 셈하려고 따라 쓴다. */
-const PHYSICS_MAX_FRAME_DELTA = 0.5;
 
 const INITIAL_STATE = createClawState(LAYOUT, GAME_CONFIG);
 const INITIAL_SWAY: Sway = { shownX: INITIAL_STATE.x, shownZ: INITIAL_STATE.z, velocityX: 0, velocityZ: 0 };
@@ -207,11 +212,17 @@ function pullHeldDoll(state: ClawState, sway: Sway, dolls: Map<string, DollHandl
   dolls.get(state.held.dollId)?.setVelocityToward({ x: sway.shownX, y: holdY, z: sway.shownZ }, deps.config.grab.holdFollow);
 }
 
-/** 들려 있지 않은 인형이 배출구 바닥 가까이 들어갔는지. 처음 떨어지는 중인 인형은 다시 떨어뜨릴 인형이라 빼고 본다. */
-function isChuteArrival(snapshot: DollSnapshot, state: ClawState, dolls: Map<string, DollHandle>, deps: ClawDeps): boolean {
-  if (snapshot.id === state.held?.dollId) return false;
-  if (!isInsideChute(snapshot, deps.lookup.metricsOf(snapshot.kindId), deps.layout, deps.config)) return false;
-  return dolls.get(snapshot.id)?.isFirstFalling() === false;
+/**
+ * 인형 하나가 배출구 바닥 가까이 들어갔을 때 뽑은 것으로 칠지, 다시 떨어뜨릴지(judgeChuteArrival).
+ * 들려 있거나 처음 떨어지는 중인 인형은 손대지 않는다. 처음 떨어지는 인형은 인형 스스로 다시 떨어진다(Doll.tsx).
+ */
+function judgeSnapshot(snapshot: DollSnapshot, state: ClawState, handle: DollHandle, hasDropped: boolean, deps: ClawDeps): ChuteVerdict {
+  return judgeChuteArrival({
+    isInChute: isInsideChute(snapshot, deps.lookup.metricsOf(snapshot.kindId), deps.layout, deps.config),
+    isHeld: snapshot.id === state.held?.dollId,
+    isFirstFalling: handle.isFirstFalling(),
+    hasDropped,
+  });
 }
 
 function poseOf(state: ClawState, sway: Sway): ClawPose {

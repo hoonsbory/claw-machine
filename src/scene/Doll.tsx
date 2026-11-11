@@ -6,9 +6,11 @@ import { DOLL_KINDS } from '../config/dollCatalog';
 import { GAME_CONFIG } from '../config/gameConfig';
 import type { DollInstance } from '../game/collection';
 import { getCabinetLayout } from '../game/dollGeometry';
-import { isFirstFall, needsRedrop, pickSpawnPoint, type FallState } from '../game/spawn';
+import { clamp } from '../game/math';
+import { isFirstFall, needsRedrop, pickRespawnPoint, type FallState } from '../game/spawn';
 import type { DollCollider, DollKind, Vec3 } from '../game/types';
 import { DollModel } from './DollModel';
+import { PHYSICS_MAX_FRAME_DELTA } from './frameOrder';
 
 /** 집게 쪽에서 인형 하나의 물리 몸을 다루는 손잡이 */
 export interface DollHandle {
@@ -77,12 +79,13 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
     }
 
     const fallState = fall.current;
-    fallState.sinceSpawn += delta;
+    // 물리와 같은 상한으로 잘라, 탭이 뒤로 갔다 온 프레임에 실제로는 떨어지지도 않은 인형이 처음 떨어지기를 끝내지 않게 한다
+    fallState.sinceSpawn += clamp(delta, 0, PHYSICS_MAX_FRAME_DELTA);
     if (body.isSleeping()) fallState.hasSettled = true;
     if (!needsRedrop(body.translation(), fallState, CABINET_LAYOUT, GAME_CONFIG)) return;
 
     restartFall(fallState);
-    placeAt(body, pickSpawnPoint(RESPAWN_INDEX, CABINET_LAYOUT, GAME_CONFIG, Math.random));
+    placeAt(body, pickRespawnPoint(DOLL_KINDS.length, CABINET_LAYOUT, GAME_CONFIG, Math.random));
   });
 
   const { doll } = GAME_CONFIG.physics;
@@ -105,8 +108,6 @@ export function Doll({ instance, kind, spawnAt, isVanishing, onVanished, registe
 }
 
 const CABINET_LAYOUT = getCabinetLayout(DOLL_KINDS, GAME_CONFIG);
-/** 다시 떨어뜨리는 인형은 처음 넣는 인형 전부보다 한 칸 위에서 떨어져, 쌓인 인형 속에 끼지 않는다 */
-const RESPAWN_INDEX = DOLL_KINDS.length * GAME_CONFIG.dolls.perKind;
 const ZERO: Vec3 = { x: 0, y: 0, z: 0 };
 
 interface ScaledColliderProps {
