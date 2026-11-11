@@ -10,7 +10,7 @@ import {
   type Object3D,
   type Vector3Tuple,
 } from 'three';
-import { PLACEHOLDER_CORE_RADIUS, PLACEHOLDER_HEAD_RADIUS, PLACEHOLDER_HEAD_Y } from '../config/dollCatalog';
+import { DOLL_KINDS, PLACEHOLDER_CORE_RADIUS, PLACEHOLDER_HEAD_RADIUS, PLACEHOLDER_HEAD_Y } from '../config/dollCatalog';
 import type { DollKind, PlaceholderLook } from '../game/types';
 
 export interface DollModelProps {
@@ -60,6 +60,11 @@ const LEADING_SLASH = /^\//;
  */
 function resolveModelUrl(modelUrl: string): string {
   return `${import.meta.env.BASE_URL}${modelUrl.replace(LEADING_SLASH, '')}`;
+}
+
+// 모델 파일은 앱을 읽자마자 미리 받기 시작한다. 인형이 처음 그려질 때 임시 도형이 오래 보이지 않는다.
+for (const kind of DOLL_KINDS) {
+  if (kind.modelUrl !== null) useGLTF.preload(resolveModelUrl(kind.modelUrl));
 }
 
 /** .glb 모델을 맞추는 높이(표준 크기 단위). 임시 인형 곰의 높이(약 1.55)와 같은 크기다. */

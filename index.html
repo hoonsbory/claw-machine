@@ -12,9 +12,26 @@
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='8' cy='9' r='5' fill='%23ff6fa5'/%3E%3Ccircle cx='24' cy='9' r='5' fill='%23ff6fa5'/%3E%3Ccircle cx='16' cy='18' r='12' fill='%23ff6fa5'/%3E%3Ccircle cx='12' cy='17' r='1.6' fill='%237a2f55'/%3E%3Ccircle cx='20' cy='17' r='1.6' fill='%237a2f55'/%3E%3C/svg%3E"
     />
     <title>인형뽑기</title>
+    <style>
+      /* 앱을 받는 동안에도 흰 화면 대신 분홍 바탕과 안내 글자를 보여 준다. 앱이 그려지면 #root 안의 글자는 사라진다. */
+      body {
+        margin: 0;
+        background: linear-gradient(#ffe3ee, #ffc4dc);
+        min-height: 100dvh;
+      }
+      .boot-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100dvh;
+        margin: 0;
+        color: #c21f5c;
+        font: 700 18px -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><p class="boot-loading">불러오는 중…</p></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

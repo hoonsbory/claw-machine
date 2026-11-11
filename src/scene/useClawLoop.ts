@@ -65,6 +65,8 @@ export function useClawLoop({
   const removedIds = useRef(new Set<string>());
   // 이 페이지를 연 뒤 내리기를 한 번이라도 요청했는지. 그 전에 배출구에 굴러 들어간 인형은 뽑은 것으로 치지 않는다.
   const hasDropped = useRef(false);
+  // 물리 세계가 첫 단계를 돌았는지. 이 루프는 물리 세계가 준비된 뒤에야 돈다.
+  const hasStepped = useRef(false);
   const sinceLastStep = useRef(0);
   const view = useRef<ClawView>(INITIAL_VIEW);
 
@@ -76,7 +78,9 @@ export function useClawLoop({
     const { deps } = tuning.current;
 
     const snapshots = readDolls(dolls, removedIds.current, kindOf);
-    const dropRequested = input.takeDropRequest();
+    // 물리 세계가 준비되기 전(불러오는 동안)에 누른 내리기는 쌓아 두지 않고 버린다. 준비되자마자 집게가 저절로 내려가지 않는다.
+    const dropRequested = input.takeDropRequest() && hasStepped.current;
+    hasStepped.current = true;
     if (dropRequested) hasDropped.current = true;
     const { state, events } = stepClaw(before, { move: input.readMove(), dropRequested, dolls: snapshots, dt: TIME_STEP }, deps);
     for (const event of events) onEvent(event);
