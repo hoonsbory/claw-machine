@@ -14,7 +14,9 @@ import { DebugPanel } from './ui/DebugPanel';
 import { DropButton } from './ui/DropButton';
 import { Hud } from './ui/Hud';
 import { Joystick } from './ui/Joystick';
+import { RotateNotice } from './ui/RotateNotice';
 import { SoundToggle } from './ui/SoundToggle';
+import { useIsTouchLandscape } from './ui/useIsTouchLandscape';
 
 const STORAGE = createBrowserStorage();
 const SFX = createSfx();
@@ -31,7 +33,9 @@ const CAN_SAVE_PROGRESS = IS_DEBUG_MODE && canWriteStorage();
 function App(): ReactElement {
   const session = useGameSession(STORAGE);
   const { celebration } = session;
-  const input = useMoveInput({ isBlocked: celebration !== null });
+  // 터치 기기를 가로로 눕히면 세로로 돌려 달라는 화면이 덮고, 그동안 입력은 게임에 전달하지 않는다
+  const isTouchLandscape = useIsTouchLandscape();
+  const input = useMoveInput({ isBlocked: celebration !== null || isTouchLandscape });
   // 음소거는 저장하지 않는다. 새로 열면 늘 소리가 켜져 있다.
   const [isMuted, setIsMuted] = useState(false);
   // 조정 패널 값은 저장하지 않는다. ?debug 가 없으면 빈 덮어쓰기 그대로라 gameConfig.ts 값으로 돈다.
@@ -92,6 +96,7 @@ function App(): ReactElement {
             onClose={session.closeCelebration}
           />
         )}
+        {isTouchLandscape && <RotateNotice />}
       </main>
     </div>
   );
