@@ -96,6 +96,19 @@ describe('진동', () => {
     const [[grabDuration], [winDuration]] = vibrateSpy.mock.calls;
     expect(winDuration).toBeGreaterThan(grabDuration);
   });
+
+  it('화면을 한 번도 누르기 전에는 떨지 않는다(새로 열자마자 되살린 축하 화면: 브라우저가 막고 콘솔에 오류를 남긴다)', () => {
+    const vibrateSpy = vi.fn<(duration: number) => boolean>((): boolean => true);
+    const userActivation = { hasBeenActive: false };
+    vi.stubGlobal('navigator', { vibrate: vibrateSpy, userActivation });
+
+    vibrate('win');
+    expect(vibrateSpy).not.toHaveBeenCalled();
+
+    userActivation.hasBeenActive = true;
+    vibrate('win');
+    expect(vibrateSpy).toHaveBeenCalledTimes(1);
+  });
 });
 
 /** 처음에는 잠겨 있고 resume 으로 켜지는 가짜 오디오. 만든 소리 개수만 센다. */

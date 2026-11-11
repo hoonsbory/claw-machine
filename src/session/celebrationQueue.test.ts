@@ -6,11 +6,14 @@ import {
   currentCelebration,
   dequeueCelebration,
   enqueueCelebration,
+  restoreCelebrations,
+  unseenKindIds,
   type CelebrationQueue,
   type WinCelebration,
 } from './celebrationQueue';
 
 const [bear, bunny, cat] = TEST_DOLL_KINDS;
+const ALL_KIND_IDS = new Set(TEST_DOLL_KINDS.map((kind) => kind.id));
 
 describe('축하 줄', () => {
   it('축하가 떠 있는 동안 또 뽑으면 뒤에 서고, 지금 축하는 같은 것 그대로다', () => {
@@ -57,6 +60,44 @@ describe('축하 줄', () => {
 
   it('카탈로그에 없는 종류는 코드 실수이므로 던진다', () => {
     expect(() => celebrationForWin({ wonKindId: 'dragon', isComplete: false }, TEST_DOLL_KINDS)).toThrow('dragon');
+  });
+});
+
+describe('새로 열었을 때 닫지 않은 축하 되살리기', () => {
+  it('줄에 선 순서대로 종류 id 를 저장할 목록으로 바꾼다', () => {
+    const queue: CelebrationQueue = [
+      { kind: cat, isComplete: false },
+      { kind: bear, isComplete: false },
+    ];
+    expect(unseenKindIds(queue)).toEqual([cat.id, bear.id]);
+    expect(unseenKindIds([])).toEqual([]);
+  });
+
+  it('저장된 순서대로 다시 줄 세우고, 다 뽑지 않았으면 모두 보통 축하다', () => {
+    const won = new Set([bear.id, cat.id]);
+    expect(restoreCelebrations([cat.id, bear.id], won, TEST_DOLL_KINDS)).toEqual([
+      { kind: cat, isComplete: false },
+      { kind: bear, isComplete: false },
+    ]);
+  });
+
+  it('모든 종류를 뽑았으면 마지막 축하만 큰 축하다', () => {
+    expect(restoreCelebrations([bunny.id, cat.id], ALL_KIND_IDS, TEST_DOLL_KINDS)).toEqual([
+      { kind: bunny, isComplete: false },
+      { kind: cat, isComplete: true },
+    ]);
+  });
+
+  it('저장했다 되살린 줄은 원래 줄과 같다', () => {
+    const queue: CelebrationQueue = [
+      { kind: bunny, isComplete: false },
+      { kind: cat, isComplete: true },
+    ];
+    expect(restoreCelebrations(unseenKindIds(queue), ALL_KIND_IDS, TEST_DOLL_KINDS)).toEqual(queue);
+  });
+
+  it('닫지 않은 축하가 없으면 빈 줄이다', () => {
+    expect(restoreCelebrations([], ALL_KIND_IDS, TEST_DOLL_KINDS)).toEqual([]);
   });
 });
 

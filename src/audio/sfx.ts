@@ -71,10 +71,14 @@ export function createSfx(): Sfx {
 /** 진동 이름: 잡았을 때 짧게, 획득 때 길게 */
 export type VibrationName = 'grab' | 'win';
 
-/** 진동을 지원하는 기기(안드로이드)에서만 떤다. 아이폰 브라우저에는 navigator.vibrate 가 없다. 음소거와 상관없다. */
+/**
+ * 진동을 지원하는 기기(안드로이드)에서만 떤다. 아이폰 브라우저에는 navigator.vibrate 가 없다. 음소거와 상관없다.
+ * 화면을 한 번도 누르기 전(새로 열자마자 닫지 않은 축하를 되살릴 때)에는 브라우저가 진동을 막고 콘솔에 오류를 남기므로 부르지 않는다.
+ */
 export function vibrate(name: VibrationName): void {
   const device = (globalThis as Partial<Pick<typeof globalThis, 'navigator'>>).navigator;
   if (typeof device?.vibrate !== 'function') return;
+  if (!hasUserActivation()) return;
   try {
     device.vibrate(VIBRATION_MS[name]);
   } catch {

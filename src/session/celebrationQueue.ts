@@ -31,3 +31,24 @@ export function dequeueCelebration(queue: CelebrationQueue): CelebrationQueue {
 export function currentCelebration(queue: CelebrationQueue): WinCelebration | null {
   return queue[0] ?? null;
 }
+
+/** 저장해 둘, 아직 닫지 않은 축하의 종류 id. 줄 선 순서 그대로다. */
+export function unseenKindIds(queue: CelebrationQueue): string[] {
+  return queue.map((celebration): string => celebration.kind.id);
+}
+
+/**
+ * 새로 열었을 때 닫지 않은 축하를 저장된 순서대로 다시 줄 세운다. unseenIds 는 뽑은 기록에 있는 id 만 넘겨받는다.
+ * 줄 맨 끝이 가장 나중에 뽑은 종류이므로, 모든 종류를 뽑았으면 그 마지막 축하만 큰 축하다.
+ */
+export function restoreCelebrations(
+  unseenIds: readonly string[],
+  wonKindIds: ReadonlySet<string>,
+  kinds: readonly DollKind[],
+): CelebrationQueue {
+  const isAllWon = kinds.every((kind): boolean => wonKindIds.has(kind.id));
+  const lastIndex = unseenIds.length - 1;
+  return unseenIds.map(
+    (wonKindId, index): WinCelebration => celebrationForWin({ wonKindId, isComplete: isAllWon && index === lastIndex }, kinds),
+  );
+}
