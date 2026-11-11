@@ -4,6 +4,7 @@ import { GAME_CONFIG } from '../config/gameConfig';
 import type { KeyValueStorage } from '../game/progressStore';
 import { useTries } from '../session/useTries';
 import { DESIGN_TOKENS } from '../theme/tokens';
+import { ChargeDecorations } from './ChargeDecorations';
 import { removeHash } from './chargeRoute';
 import { HeartDoodle, StarDoodle } from './doodles';
 import { leaveChargeRoute } from './useChargeRoute';
@@ -15,6 +16,7 @@ export interface ChargePageProps {
 /**
  * 주인만 아는 기회 충전 페이지(주소 끝 `#charge`). 게임 화면에는 여기로 오는 단추가 없다.
  * 게임과 같은 9:16 틀과 하늘 바탕 위에 제목, 안내, 지금 남은 기회, 충전 단추 둘, 게임으로 돌아가는 링크를 위에서 아래로 놓는다.
+ * 제목과 남은 기회 둘레에 캐릭터 그림을 두고, 아래 언덕에는 장난감 차를 탄 캐릭터가 지나간다(ChargeDecorations).
  * 충전은 저장소 값에 바로 더해 저장한다. 다른 탭에 열린 게임은 탭으로 돌아올 때 새 값을 읽는다.
  * 남은 기회가 최대이면 충전 단추를 끈다.
  */
@@ -30,15 +32,21 @@ export function ChargePage({ storage }: ChargePageProps): ReactElement {
 
   return (
     <section className={page}>
-      <h1 className={title}>
-        <HeartDoodle className={titleMark} />
-        {TITLE}
-        <StarDoodle className={titleMark} />
-      </h1>
+      <div className={decoAnchor}>
+        <ChargeDecorations anchor="title" />
+        <h1 className={title}>
+          <HeartDoodle className={titleMark} />
+          {TITLE}
+          <StarDoodle className={titleMark} />
+        </h1>
+      </div>
       <p className={caption}>{CAPTION}</p>
-      <p className={countPlate} aria-live="polite" aria-atomic>
-        <span className={countLabel}>{COUNT_LABEL}</span> <span className={countNumber}>{tries}</span>
-      </p>
+      <div className={decoAnchor}>
+        <ChargeDecorations anchor="count" />
+        <p className={countPlate} aria-live="polite" aria-atomic>
+          <span className={countLabel}>{COUNT_LABEL}</span> <span className={countNumber}>{tries}</span>
+        </p>
+      </div>
       <div className={buttonRow}>
         {CHARGE_AMOUNTS.map((amount) => (
           <button key={amount} type="button" className={chargeButton} disabled={isFull} onClick={(): void => add(amount)}>
@@ -49,6 +57,7 @@ export function ChargePage({ storage }: ChargePageProps): ReactElement {
       <a className={backLink} href={removeHash(window.location.href)} onClick={goToGame}>
         {BACK_TEXT}
       </a>
+      <ChargeDecorations anchor="page" />
     </section>
   );
 }
@@ -115,8 +124,14 @@ const page = css`
   text-align: center;
 `;
 
-/** 기계 간판처럼 버터색 판에 갈색 글자, 양옆에 하트와 별 */
+/** 제목과 남은 기회 판을 감싸, 둘레의 캐릭터 그림이 이 상자를 기준으로 자리를 잡게 한다 */
+const decoAnchor = css`
+  position: relative;
+`;
+
+/** 기계 간판처럼 버터색 판에 갈색 글자, 양옆에 하트와 별. 둘레의 캐릭터 그림보다 앞에 그려져 그림 끝이 판 뒤로 숨는다. */
 const title = css`
+  position: relative;
   display: flex;
   align-items: center;
   gap: ${TITLE_MARK_GAP}px;

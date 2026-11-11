@@ -19,7 +19,7 @@ function App(): ReactElement {
   return (
     <div className={screen}>
       <main className={frame}>
-        <SkyBackdrop />
+        <SkyBackdrop showsCharacters={!isChargeRoute} />
         {isChargeRoute ? <ChargePage storage={STORAGE} /> : <GameScreen storage={STORAGE} />}
       </main>
     </div>

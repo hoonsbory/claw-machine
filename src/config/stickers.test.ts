@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { TEST_DOLL_KINDS } from '../game/testFixtures';
-import { getStickerKindId, getStickerUrl } from './stickers';
+import { getDecoUrl, getStickerKindId, getStickerUrl } from './stickers';
 
 describe('스티커 주소', () => {
   it('종류 id 로 public/stickers/<id>.png 주소를 앱 경로 뒤에 만든다', () => {
     expect(getStickerUrl('usagi')).toBe(`${import.meta.env.BASE_URL}stickers/usagi.png`);
+  });
+
+  it('장식 그림 파일 이름으로 public/deco/ 주소를 앱 경로 뒤에 만든다', () => {
+    expect(getDecoUrl('car-usagi.png')).toBe(`${import.meta.env.BASE_URL}deco/car-usagi.png`);
   });
 });
 

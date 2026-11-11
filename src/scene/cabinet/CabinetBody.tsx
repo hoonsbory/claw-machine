@@ -1,9 +1,16 @@
-import type { ReactElement } from 'react';
+import { useEffect, type ReactElement } from 'react';
 import { CylinderGeometry, MeshBasicMaterial, MeshStandardMaterial, SphereGeometry, type BufferGeometry, type Vector3Tuple } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { PASTEL_MATERIALS } from '../pastelMaterials';
-import { BODY_DECAL_HEIGHT, BODY_DECAL_WIDTH, BUTTON_PLATE, createBodyDecalTexture } from './bodyTextures';
+import {
+  BODY_DECAL_HEIGHT,
+  BODY_DECAL_WIDTH,
+  BODY_STICKER_KIND_IDS,
+  BUTTON_PLATE,
+  createBodyDecalTexture,
+  repaintBodyDecal,
+} from './bodyTextures';
 import {
   FLOOR_BOTTOM_Y,
   FLOOR_HALF,
@@ -13,14 +20,22 @@ import {
   WALL_HEIGHT,
 } from './cabinetDimensions';
 import { createGroundShadowTexture } from './playSpaceTextures';
+import { whenStickersLoaded } from './stickerImages';
 
 /**
  * 기계 몸체 장식: 크림색 모서리 기둥과 윗난간, 바닥 판을 두른 버터색 띠, 둥근 복숭아색 아래 몸통과 그 앞면 그림(경품 문·별),
  * 산호색 장식 단추, 발치의 옅은 그림자. 모두 모양만 있고 충돌체도 그림자 드리우기도 없다.
  * 기둥과 난간은 벽 바깥 줄(|x|, |z| ≥ 바닥 절반)에 서고 몸통은 바닥 아래에 있어서, 카메라에서 놀이 공간 안을 가리지 않는다.
  * 기둥·난간은 도형 하나로 합쳐 한 번에 그린다.
+ * 앞면 그림의 인형 스티커는 그림을 받으면 같은 텍스처에 다시 그려 넣는다(그리기 수가 늘지 않는다).
  */
 export function CabinetBody(): ReactElement {
+  useEffect(
+    (): (() => void) =>
+      whenStickersLoaded(BODY_STICKER_KIND_IDS, (images): void => repaintBodyDecal(BODY_DECAL_TEXTURE, images)),
+    [],
+  );
+
   return (
     <>
       <mesh geometry={CREAM_FRAME} material={PASTEL_MATERIALS.cream} />
@@ -60,7 +75,8 @@ const DECAL_LIFT = 0.006;
 const DECAL_TOP_Y = LOWER_BODY_CENTER[1] + BODY_DECAL_HEIGHT / 2;
 const DECAL_LEFT_X = -BODY_DECAL_WIDTH / 2;
 const DECAL_CENTER: Vector3Tuple = [0, LOWER_BODY_CENTER[1], BODY_HALF + DECAL_LIFT];
-const DECAL_MATERIAL = new MeshStandardMaterial({ map: createBodyDecalTexture(), transparent: true, roughness: 0.85 });
+const BODY_DECAL_TEXTURE = createBodyDecalTexture();
+const DECAL_MATERIAL = new MeshStandardMaterial({ map: BODY_DECAL_TEXTURE, transparent: true, roughness: 0.85 });
 
 /** 장식 단추: 앞면 그림의 받침 위에 앉은 납작한 반구 */
 const BUTTON_TO_PLATE_RATIO = 0.68;

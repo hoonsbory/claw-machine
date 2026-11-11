@@ -7,6 +7,11 @@ export function getStickerUrl(kindId: string): string {
   return resolvePublicUrl(`stickers/${kindId}.png`);
 }
 
+/** 배경·충전 페이지에 놓는 납작한 그림 하나의 주소. 그림은 public/deco/<fileName> 이다. */
+export function getDecoUrl(fileName: string): string {
+  return resolvePublicUrl(`deco/${fileName}`);
+}
+
 /**
  * 장식 자리 번호(0부터)에 붙일 종류 id. 카탈로그 순서대로 돌아가며 고르므로, 자리를 종류 수만큼 이상 두면 모든 종류가 한 번씩은 나온다.
  * 종류를 바꿔도 장식 코드는 고치지 않는다.
