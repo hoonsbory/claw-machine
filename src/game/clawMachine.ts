@@ -18,7 +18,7 @@ export interface ClawInput {
   move: Vec2;
   dropRequested: boolean;
   dolls: readonly DollSnapshot[];
-  /** 지난 프레임부터 흐른 시간(초) */
+  /** 이번에 나아갈 시간(초). 루프는 물리 한 단계(physics.timeStep)씩 넘긴다. 길게 넘겨도 단계마다 바닥·이동 한계·목표 높이에서 멈춘다. */
   dt: number;
 }
 
@@ -147,7 +147,7 @@ function stepRelease(state: ClawState, config: GameConfig): ClawStep {
 /** 한 프레임 진행한다. 입력 상태는 바꾸지 않고 새 상태와 이번 프레임에 일어난 일을 돌려준다. */
 export function stepClaw(state: ClawState, input: ClawInput, deps: ClawDeps): { state: ClawState; events: ClawEvent[] } {
   const { config } = deps;
-  const dt = Math.min(input.dt, config.physics.maxFrameTime);
+  const { dt } = input;
   const current: ClawState = { ...state, phaseTime: state.phaseTime + dt };
 
   switch (current.phase) {

@@ -82,7 +82,7 @@ export const TEST_GAME_CONFIG: GameConfig = {
   dolls: { perKind: 3, vanishTime: 0.3, chuteDetectMargin: 0.4, respawnBelowY: -5, outOfBoundsMargin: 1 },
   spawn: { limit: 2.3, chuteMargin: 0.4, baseHeight: 1.5, heightStep: 0.9, firstFallMaxTime: 6 },
   physics: {
-    gravityY: -20, maxFrameTime: 0.05, timeStep: 1 / 60,
+    gravityY: -20, timeStep: 1 / 60,
     doll: { friction: 0.5, restitution: 0.15, linearDamping: 0.05, angularDamping: 0.35 },
     wall: { friction: 0.7, restitution: 0.05 },
   },

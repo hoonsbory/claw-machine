@@ -167,8 +167,6 @@ it('한 프레임이 매우 길어도 바닥과 이동 한계를 넘지 않는�
   const dropping = stepClaw(start.state, { ...idleInput, dropRequested: true }, deps).state;
   const next = stepClaw(dropping, { ...idleInput, dt: 30 }, deps).state;
   expect(next.hubY).toBeGreaterThanOrEqual(TEST_GAME_CONFIG.claw.hubMinY);
-  // 긴 프레임도 maxFrameTime 만큼만 진행한다
-  expect(next.hubY).toBeCloseTo(TEST_GAME_CONFIG.claw.hubRestY - TEST_GAME_CONFIG.claw.dropSpeed * TEST_GAME_CONFIG.physics.maxFrameTime);
   const moved = stepClaw(start.state, { ...idleInput, move: { x: 1, z: 1 }, dt: 30 }, deps).state;
   expect(moved.x).toBeLessThanOrEqual(TEST_GAME_CONFIG.claw.moveLimit);
 });
