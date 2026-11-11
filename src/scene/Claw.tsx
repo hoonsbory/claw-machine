@@ -1,7 +1,10 @@
 import { useFrame } from '@react-three/fiber';
 import { useMemo, useRef, type ReactElement, type RefObject } from 'react';
-import { MathUtils, MeshBasicMaterial, MeshStandardMaterial, Vector3, type Group, type Mesh, type Vector3Tuple } from 'three';
+import { MathUtils, MeshBasicMaterial, Vector3, type Group, type Mesh, type Vector3Tuple } from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { GAME_CONFIG } from '../config/gameConfig';
+import { DESIGN_TOKENS } from '../theme/tokens';
+import { PASTEL_MATERIALS } from './pastelMaterials';
 import type { ClawView } from './useClawLoop';
 
 export interface ClawProps {
@@ -11,7 +14,11 @@ export interface ClawProps {
   showGuide: boolean;
 }
 
-/** 집게: 위쪽 레일과 받침, 줄, 몸통과 손가락 셋, 대기 중 바닥 위치 안내선. 모양만 있고 충돌체는 없다. */
+/**
+ * 집게: 위쪽 레일과 받침, 줄, 몸통과 손가락 셋, 대기 중 바닥 위치 안내선. 모양만 있고 충돌체는 없다.
+ * 회색 금속 대신 버터색 레일, 크림색 받침, 갈색 줄, 산호색 둥근 몸통, 끝이 둥근 금색 손가락이다.
+ * 크기와 움직임(손가락 길이·벌림 각도·흔들림)은 모양을 바꾸기 전과 같다.
+ */
 export function Claw({ view, maxCoreRadius, showGuide }: ClawProps): ReactElement {
   const prongShape = useMemo((): ProngShape => getProngShape(maxCoreRadius), [maxCoreRadius]);
 
@@ -42,12 +49,10 @@ function Gantry({ view }: ViewProps): ReactElement {
 
   return (
     <>
-      <mesh ref={railRef} material={METAL}>
-        <boxGeometry args={RAIL_SIZE} />
+      <mesh ref={railRef} material={PASTEL_MATERIALS.butter} rotation-z={Math.PI / 2}>
+        <cylinderGeometry args={[RAIL_RADIUS, RAIL_RADIUS, RAIL_LENGTH, RAIL_SEGMENTS]} />
       </mesh>
-      <mesh ref={carriageRef} material={METAL}>
-        <boxGeometry args={CARRIAGE_SIZE} />
-      </mesh>
+      <mesh ref={carriageRef} material={PASTEL_MATERIALS.cream} geometry={CARRIAGE_GEOMETRY} />
     </>
   );
 }
@@ -65,7 +70,7 @@ function Cable({ view }: ViewProps): ReactElement {
   });
 
   return (
-    <mesh ref={cableRef} material={METAL}>
+    <mesh ref={cableRef} material={PASTEL_MATERIALS.line}>
       <cylinderGeometry args={[CABLE_RADIUS, CABLE_RADIUS, 1, CABLE_SEGMENTS]} />
     </mesh>
   );
@@ -98,8 +103,12 @@ function ClawHead({ view, prongShape }: ClawHeadProps): ReactElement {
 
   return (
     <group ref={headRef}>
-      <mesh material={METAL} castShadow>
-        <cylinderGeometry args={[HUB_TOP_RADIUS, HUB_BOTTOM_RADIUS, HUB_HEIGHT, HUB_SEGMENTS]} />
+      {/* 몸통: 아랫면 반지름 HUB_BOTTOM_RADIUS, 높이 HUB_HEIGHT 인 둥근 지붕. 줄은 꼭대기(HUB_HEIGHT / 2)에 닿는다. */}
+      <mesh material={PASTEL_MATERIALS.coral} position-y={-HUB_HEIGHT / 2} scale-y={HUB_HEIGHT / HUB_BOTTOM_RADIUS} castShadow>
+        <sphereGeometry args={[HUB_BOTTOM_RADIUS, HUB_SEGMENTS, HUB_RINGS, 0, Math.PI * 2, 0, Math.PI / 2]} />
+      </mesh>
+      <mesh material={PASTEL_MATERIALS.butter} position-y={-HUB_HEIGHT / 2} rotation-x={Math.PI / 2}>
+        <torusGeometry args={[HUB_BOTTOM_RADIUS, HUB_RIM_THICKNESS, HUB_RIM_TUBE_SEGMENTS, HUB_SEGMENTS]} />
       </mesh>
       {PRONG_YAWS.map((yaw, index) => (
         <group key={index} rotation-y={yaw}>
@@ -110,11 +119,11 @@ function ClawHead({ view, prongShape }: ClawHeadProps): ReactElement {
             }}
             position-x={PRONG_MOUNT_RADIUS}
           >
-            <mesh material={METAL} position-y={-prongShape.length / 2} castShadow>
-              <boxGeometry args={[PRONG_THICKNESS, prongShape.length, PRONG_THICKNESS]} />
+            <mesh material={PASTEL_MATERIALS.gold} position-y={-prongShape.length / 2} castShadow>
+              <capsuleGeometry args={[PRONG_RADIUS, prongShape.length - PRONG_THICKNESS, CAPSULE_CAP_SEGMENTS, CAPSULE_RADIAL_SEGMENTS]} />
             </mesh>
-            <mesh material={METAL} position={[-TIP_INSET, -prongShape.length, 0]} castShadow>
-              <boxGeometry args={[TIP_LENGTH, PRONG_THICKNESS, PRONG_THICKNESS]} />
+            <mesh material={PASTEL_MATERIALS.gold} position={[-TIP_INSET, -prongShape.length, 0]} rotation-z={Math.PI / 2} castShadow>
+              <capsuleGeometry args={[PRONG_RADIUS, TIP_LENGTH - PRONG_THICKNESS, CAPSULE_CAP_SEGMENTS, CAPSULE_RADIAL_SEGMENTS]} />
             </mesh>
           </group>
         </group>
@@ -185,26 +194,33 @@ const scratchDirection = new Vector3();
 const UP = new Vector3(0, 1, 0);
 const MIDPOINT = 0.5;
 
-const METAL = new MeshStandardMaterial({ color: '#d9dbe6', metalness: 0.7, roughness: 0.3 });
-const GUIDE = new MeshBasicMaterial({ color: '#ff3d7f', transparent: true, opacity: 0.55 });
+const GUIDE_OPACITY = 0.8;
+const GUIDE = new MeshBasicMaterial({ color: DESIGN_TOKENS.color.coralDeep, transparent: true, opacity: GUIDE_OPACITY });
 
 /** 받침은 기계 벽 윗면보다 이만큼 아래, 레일은 받침보다 이만큼 위에 둔다 */
 const CARRIAGE_BELOW_WALL_TOP = 0.4;
 const RAIL_ABOVE_CARRIAGE = 0.2;
 const CARRIAGE_Y = GAME_CONFIG.cabinet.wallHeight - CARRIAGE_BELOW_WALL_TOP;
 const RAIL_Y = CARRIAGE_Y + RAIL_ABOVE_CARRIAGE;
-const RAIL_THICKNESS = 0.12;
-const RAIL_DEPTH = 0.2;
-/** 레일은 기계 폭 전체에 걸친다 */
-const RAIL_SIZE: Vector3Tuple = [GAME_CONFIG.cabinet.floorHalf * 2, RAIL_THICKNESS, RAIL_DEPTH];
+/** 레일은 기계 폭 전체에 걸친 둥근 막대다(예전 상자 레일의 높이 0.12 ~ 깊이 0.2 사이 굵기) */
+const RAIL_RADIUS = 0.08;
+const RAIL_LENGTH = GAME_CONFIG.cabinet.floorHalf * 2;
+const RAIL_SEGMENTS = 12;
+/** 받침은 크기는 그대로(0.6 × 0.3 × 0.6) 모서리만 둥글다 */
 const CARRIAGE_SIZE: Vector3Tuple = [0.6, 0.3, 0.6];
+const CARRIAGE_RADIUS = 0.1;
+const CARRIAGE_SEGMENTS = 3;
+const CARRIAGE_GEOMETRY = new RoundedBoxGeometry(...CARRIAGE_SIZE, CARRIAGE_SEGMENTS, CARRIAGE_RADIUS);
 const CABLE_RADIUS = 0.03;
 const CABLE_SEGMENTS = 8;
 
-const HUB_TOP_RADIUS = 0.22;
 const HUB_BOTTOM_RADIUS = 0.26;
 const HUB_HEIGHT = 0.25;
 const HUB_SEGMENTS = 20;
+const HUB_RINGS = 8;
+/** 몸통 아랫단을 두른 버터색 테두리 */
+const HUB_RIM_THICKNESS = 0.035;
+const HUB_RIM_TUBE_SEGMENTS = 6;
 /** 흔들릴 때 실제 위치와 보이는 위치의 차이 1당 기우는 각도(라디안) */
 const SWAY_TILT = 0.9;
 
@@ -213,6 +229,10 @@ const PRONG_YAWS = Array.from({ length: PRONG_COUNT }, (_, index): number => (in
 /** 몸통 중심에서 손가락이 달린 곳까지 */
 const PRONG_MOUNT_RADIUS = 0.18;
 const PRONG_THICKNESS = 0.07;
+/** 손가락은 굵기 PRONG_THICKNESS 인 캡슐이라 양 끝이 둥글고, 전체 길이는 예전 상자와 같다 */
+const PRONG_RADIUS = PRONG_THICKNESS / 2;
+const CAPSULE_CAP_SEGMENTS = 4;
+const CAPSULE_RADIAL_SEGMENTS = 8;
 /** 손가락 길이 = 가장 큰 인형 몸통 반지름 × 이 값 */
 const PRONG_LENGTH_PER_CORE_RADIUS = 1.35;
 /** 다 벌린 손끝의 수평 거리 = 가장 큰 인형 몸통 반지름 × 이 값 */
@@ -225,8 +245,8 @@ const TIP_INSET = 0.08;
 
 /** 바닥과 겹쳐 깜빡이지 않게 고리를 살짝 띄운다 */
 const GUIDE_RING_Y = 0.03;
-const GUIDE_RING_INNER_RADIUS = 0.5;
-const GUIDE_RING_OUTER_RADIUS = 0.62;
+const GUIDE_RING_INNER_RADIUS = 0.47;
+const GUIDE_RING_OUTER_RADIUS = 0.64;
 const GUIDE_RING_SEGMENTS = 32;
-const GUIDE_BEAM_RADIUS = 0.015;
+const GUIDE_BEAM_RADIUS = 0.02;
 const GUIDE_BEAM_SEGMENTS = 6;

@@ -8,6 +8,7 @@ import type { DollInstance } from '../game/collection';
 import { getCabinetLayout } from '../game/dollGeometry';
 import { pickSpawnPoint } from '../game/spawn';
 import type { DollKind, Vec3 } from '../game/types';
+import { DESIGN_TOKENS } from '../theme/tokens';
 import { Cabinet } from './Cabinet';
 import { Doll, type DollHandle } from './Doll';
 import { DollHandlesContext } from './dollHandles';
@@ -57,7 +58,10 @@ export function GameCanvas({
         position={SUN_POSITION}
         intensity={SUN_INTENSITY}
         castShadow
+        color={SUN_COLOR}
         shadow-mapSize={[SHADOW_MAP_SIZE, SHADOW_MAP_SIZE]}
+        shadow-intensity={SHADOW_INTENSITY}
+        shadow-radius={SHADOW_RADIUS}
         shadow-camera-left={-SHADOW_CAMERA_HALF}
         shadow-camera-right={SHADOW_CAMERA_HALF}
         shadow-camera-top={SHADOW_CAMERA_HALF}
@@ -149,11 +153,19 @@ const CAMERA_NEAR = 0.1;
 const CAMERA_FAR = 100;
 const MAX_PIXEL_RATIO = 2;
 
-const SKY_COLOR = '#ffffff';
-const GROUND_COLOR = '#ffc4dc';
-const SKY_INTENSITY = 1.6;
+/**
+ * 밝고 따뜻한 빛. 거의 흰 빛을 사방에서 넉넉히 비춰 세운 면(몸통 앞면)도 어둡지 않게 하고,
+ * 위에서 비추는 해는 약하게 두어 그림자와 입체감만 살짝 남긴다.
+ */
+const SKY_COLOR = DESIGN_TOKENS.color.lightSky;
+const GROUND_COLOR = DESIGN_TOKENS.color.lightGround;
+const SKY_INTENSITY = 2.6;
+const SUN_COLOR = DESIGN_TOKENS.color.lightSky;
 const SUN_POSITION: Vector3Tuple = [2, 12, 5];
-const SUN_INTENSITY = 1.8;
+const SUN_INTENSITY = 1.15;
 const SHADOW_MAP_SIZE = 1024;
+/** 그림자는 없애지 않고 옅고 부드럽게: 진하기(0~1)와 가장자리 번짐(그림자 지도 칸 수) */
+const SHADOW_INTENSITY = 0.75;
+const SHADOW_RADIUS = 3;
 /** 그림자를 계산하는 범위(바닥보다 조금 넓게) */
 const SHADOW_CAMERA_HALF = 5;

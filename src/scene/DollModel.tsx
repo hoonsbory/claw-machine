@@ -13,6 +13,7 @@ import {
 import { DOLL_KINDS } from '../config/dollCatalog';
 import { getModelBaseY } from '../game/dollGeometry';
 import type { DollKind, PlaceholderLook } from '../game/types';
+import { DESIGN_TOKENS } from '../theme/tokens';
 
 export interface DollModelProps {
   kind: DollKind;
@@ -199,9 +200,10 @@ const CONE = new ConeGeometry(1, 1, CONE_RADIAL_SEGMENTS);
 const GEOMETRY_BY_SHAPE: Record<PartShape, BufferGeometry> = { sphere: SPHERE, cone: CONE };
 
 const FUR_ROUGHNESS = 0.9;
-const FACE_COLOR = '#3a2030';
-const EYE_WHITE_COLOR = '#ffffff';
-const ACCENT_COLOR = '#ff8a5c';
+/** 임시 인형의 얼굴(눈·코), 눈 흰자, 볼·코끝 같은 강조 색. 실제 인형의 수놓은 얼굴처럼 따뜻한 갈색과 파스텔을 쓴다. */
+const FACE_COLOR = DESIGN_TOKENS.color.line;
+const EYE_WHITE_COLOR = DESIGN_TOKENS.color.cream;
+const ACCENT_COLOR = DESIGN_TOKENS.color.coral;
 const PAINT_MATERIALS: Record<Exclude<PartPaint, 'fur'>, MeshStandardMaterial> = {
   face: new MeshStandardMaterial({ color: FACE_COLOR }),
   eyeWhite: new MeshStandardMaterial({ color: EYE_WHITE_COLOR }),
