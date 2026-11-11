@@ -1,6 +1,6 @@
 import { expect, it } from 'vitest';
 import { DOLL_KINDS } from '../config/dollCatalog';
-import { consumeResetFlag, loadWonKinds, PROGRESS_KEY, saveWonKinds, type KeyValueStorage } from './progressStore';
+import { consumeResetFlag, loadWonKinds, PROGRESS_KEY, removeResetFlag, saveWonKinds, type KeyValueStorage } from './progressStore';
 
 const ids = DOLL_KINDS.map((k) => k.id);
 
@@ -62,4 +62,12 @@ it('reset 은 이름이 정확히 같은 쿼리 매개변수만 인정한다', (
     expect(consumeResetFlag(search, s)).toBe(false);
     expect(loadWonKinds(s, ids)).toEqual(new Set(['bear']));
   }
+});
+it('주소 쿼리에서 reset 만 떼고 나머지는 적힌 그대로 둔다', () => {
+  expect(removeResetFlag('?reset')).toBe('');
+  expect(removeResetFlag('?reset=1')).toBe('');
+  expect(removeResetFlag('?debug&reset')).toBe('?debug');
+  expect(removeResetFlag('?reset&debug=1&x=a%20b')).toBe('?debug=1&x=a%20b');
+  expect(removeResetFlag('?preset=1&resetx')).toBe('?preset=1&resetx');
+  expect(removeResetFlag('')).toBe('');
 });

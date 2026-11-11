@@ -5,17 +5,25 @@ import { applyWin, createInstances, type DollInstance } from '../game/collection
 import { loadWonKinds, saveWonKinds, type KeyValueStorage } from '../game/progressStore';
 import type { ClawPhase, DollKind } from '../game/types';
 
+/** 획득 한 번의 축하. 5종을 다 채운 획득이면 isComplete 다. */
+export interface WinCelebration {
+  kind: DollKind;
+  isComplete: boolean;
+}
+
 /** 한 판의 React 상태: 기계 안 인형, 사라지는 중인 인형, 뽑은 종류, 축하할 인형, 집게 단계 */
 export interface GameSession {
   instances: readonly DollInstance[];
   vanishingIds: ReadonlySet<string>;
   wonKindIds: ReadonlySet<string>;
-  celebration: { kind: DollKind; isComplete: boolean } | null;
+  /** 지금 보여 줄 축하. 축하 화면이 떠 있는 동안 다른 종류를 또 뽑으면 뒤에 줄 서고, 닫을 때마다 다음 것이 나온다. */
+  celebration: WinCelebration | null;
   phase: ClawPhase;
   /** 획득이면 사라질 인형 id 목록, 아니면 null */
   reportChuteArrival(dollId: string): string[] | null;
   handleVanished(id: string): void;
   setPhase(phase: ClawPhase): void;
+  /** 지금 축하를 닫고 줄 선 다음 축하로 넘어간다 */
   closeCelebration(): void;
 }
 
@@ -32,7 +40,8 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
   // 물리 단계 안에서 같은 프레임에 여러 번 불려도 바로 앞 결과를 보도록 최신 값을 ref 에도 둔다.
   // 같은 종류 둘이 한꺼번에 배출구에 들어가도 획득은 한 번만 처리된다.
   const latest = useRef(collection);
-  const [celebration, setCelebration] = useState<GameSession['celebration']>(null);
+  // 뽑은 순서대로 줄 세운다. 하나도 버리지 않는다.
+  const [celebrations, setCelebrations] = useState<readonly WinCelebration[]>([]);
   const [phase, setPhase] = useState<ClawPhase>('idle');
 
   const commit = useCallback((next: Collection): void => {
@@ -52,7 +61,8 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
         wonKindIds: result.wonKindIds,
       });
       saveWonKinds(storage, result.wonKindIds);
-      setCelebration({ kind: getKind(result.wonKindId), isComplete: result.isComplete });
+      const next: WinCelebration = { kind: getKind(result.wonKindId), isComplete: result.isComplete };
+      setCelebrations((queue): readonly WinCelebration[] => [...queue, next]);
       return result.removedIds;
     },
     [commit, storage],
@@ -74,7 +84,11 @@ export function useGameSession(storage: KeyValueStorage): GameSession {
     [commit],
   );
 
-  const closeCelebration = useCallback((): void => setCelebration(null), []);
+  const closeCelebration = useCallback(
+    (): void => setCelebrations((queue): readonly WinCelebration[] => queue.slice(1)),
+    [],
+  );
+  const celebration = celebrations[0] ?? null;
 
   return { ...collection, celebration, phase, reportChuteArrival, handleVanished, setPhase, closeCelebration };
 }

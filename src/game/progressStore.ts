@@ -55,3 +55,16 @@ export function consumeResetFlag(search: string, storage: KeyValueStorage): bool
   }
   return true;
 }
+
+/**
+ * 주소 쿼리에서 consumeResetFlag 가 알아보는 reset 매개변수만 떼어 낸다. 새로고침 때 기록이 다시 지워지지 않게 한다.
+ * 나머지 매개변수(`?debug` 등)는 적힌 글자 그대로 남긴다. 남는 것이 없으면 빈 문자열이다.
+ */
+export function removeResetFlag(search: string): string {
+  const keptPairs = search
+    .replace(/^\?/, '')
+    .split('&')
+    .filter((pair): boolean => pair !== '' && !new URLSearchParams(pair).has(RESET_PARAM));
+  if (keptPairs.length === 0) return '';
+  return `?${keptPairs.join('&')}`;
+}
